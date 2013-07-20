@@ -1,0 +1,40 @@
+﻿<Window x:Class="DbDiver.ServerSelector"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="DbDiver - Login"
+        Width="300"
+        Icon="1367468920_44757.ico"
+        Name="window"
+				SizeToContent="Height"
+        DataContext="{Binding ElementName=window}">
+    <Window.CommandBindings>
+        <CommandBinding Command="Open" Executed="ExecuteLogin" CanExecute="CanExecuteLogin" />
+        <CommandBinding Command="Close" Executed="ExecuteQuit" CanExecute="CanExecuteRefresh"/>
+        <CommandBinding Command="Refresh" Executed="ExecuteRefresh" />
+		<CommandBinding Command="Find" Executed="ExecuteOpenFile" />
+	</Window.CommandBindings>
+    <StackPanel HorizontalAlignment="Stretch" Margin="7">
+        <DockPanel>
+					  <Button Content="File..." Command="Find"  Margin="3,0,0,0" DockPanel.Dock="Right" />
+            <Button Command="Refresh" DockPanel.Dock="Right">
+                <Image Source="1366731250_7685.ico" Height="21" />
+            </Button>
+            <ComboBox SelectedIndex="{Binding SelectedServer}"  ItemsSource="{Binding Instances}" DisplayMemberPath="Name" />
+        </DockPanel>
+
+        <DockPanel Margin="0,3,0,0">
+            <Label Content="Username:" DockPanel.Dock="Left"/>
+            <TextBox Text="{Binding Username}" />
+        </DockPanel>
+
+        <DockPanel Margin="0,0,0,3">
+            <Label Content="Password:" DockPanel.Dock="Left"/>
+            <PasswordBox Name="Password" />
+        </DockPanel>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+            <Button Content="Login" IsDefault="true" Command="Open" />
+            <Button Content="Quit" IsCancel="true" Command="Close" />
+        </StackPanel>
+    </StackPanel>
+</Window>

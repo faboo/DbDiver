@@ -1,0 +1,51 @@
+﻿<Window x:Class="DbDiver.DbTools"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:src="clr-namespace:DbDiver"
+        Name="window"
+        DataContext="{Binding ElementName=window}"
+        Icon="1367468920_44757.ico"
+        Title="DbTools" Height="300" Width="430">
+	<Window.CommandBindings>
+		<CommandBinding Command="Find" Executed="ExecuteGotoFind" />
+	</Window.CommandBindings>
+	<DockPanel>
+		<DockPanel DockPanel.Dock="Top" LastChildFill="False">
+			<StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+				<Label Content="Database: "/>
+				<ComboBox ItemsSource="{Binding Databases}"
+									SelectedIndex="{Binding SelectedDatabase}"
+									Width="150" />
+				
+				<StackPanel.Style>
+					<Style TargetType="StackPanel">
+						<Style.Triggers>
+							<DataTrigger Binding="{Binding Databases}" Value="{x:Null}">
+								<Setter Property="Visibility" Value="Hidden" />
+							</DataTrigger>
+						</Style.Triggers>
+					</Style>
+				</StackPanel.Style>
+			</StackPanel>
+			<TextBox Name="search" Text="{Binding Search}" Width="150" DockPanel.Dock="Right" KeyDown="OnSearchKeyDown" />
+			<Label Content="Find: " DockPanel.Dock="Right" />
+		</DockPanel>
+		<TabControl Name="tabs" TabStripPlacement="Left">
+			<TabItem Header="Lookup" Name="lookupTab">
+				<src:DescribeControl x:Name="lookup" Connection="{Binding Connection}" OnCrawl="OnCrawl" />
+			</TabItem>
+			<TabItem Header="Crawl" Name="crawlTab">
+				<src:TableCrawlControl x:Name="crawl" Connection="{Binding Connection}" OnQuery="OnQuery" />
+			</TabItem>
+			<TabItem Header="Query" Name="queryTab">
+				<src:QueryControl x:Name="query" Connection="{Binding Connection}" />
+			</TabItem>
+			<TabItem Header="Tables">
+				<src:TablesControl Connection="{Binding Connection}" OnCrawl="OnCrawl" OnQuery="OnQuery" Search="{Binding Search}" />
+			</TabItem>
+        <TabItem Header="Modules">
+					<src:ProceduresControl Connection="{Binding Connection}" OnLookup="OnLookup" OnQuery="OnQuery" />
+        </TabItem>
+		</TabControl>
+  </DockPanel>
+</Window>

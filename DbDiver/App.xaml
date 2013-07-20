@@ -1,0 +1,32 @@
+﻿<Application x:Class="DbDiver.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Application.Resources>
+
+        <!--
+        <Style TargetType="{x:Type DataGridCell}">
+            <Setter Property="search:SearchOperations.IsMatch">
+                <Setter.Value>
+                    <MultiBinding Converter="{StaticResource SearchTermConverter}">
+                        <Binding RelativeSource="{RelativeSource Self}" />
+                        <Binding RelativeSource="{RelativeSource Self}" Path="Column" />
+                        <Binding RelativeSource="{RelativeSource Self}" Path="(search:SearchOperations.SearchTerm)" />
+                    </MultiBinding>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="search:SearchOperations.IsMatch" Value="True">
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                                <GradientStop Color="White" Offset="0"/>
+                                <GradientStop Color="#FFFFDD83" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        -->
+    </Application.Resources>
+</Application>

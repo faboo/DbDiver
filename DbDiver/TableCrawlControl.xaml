@@ -1,0 +1,106 @@
+﻿<UserControl x:Class="DbDiver.TableCrawlControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:src="clr-namespace:DbDiver"
+             mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="300"
+             Name="control">
+    <UserControl.CommandBindings>
+        <CommandBinding Command="BrowseHome" Executed="ExecuteOpenTable" CanExecute="CanExecuteOpenTable" />
+        <CommandBinding Command="BrowseForward" Executed="ExecuteOpenTable" />
+        <CommandBinding Command="New" Executed="ExecuteCreateQuery" CanExecute="CanExecuteNew" />
+		<CommandBinding Command="src:Commands.FindNext" Executed="ExecuteFind" />
+	</UserControl.CommandBindings>
+    <UserControl.Resources>
+        <DataTemplate x:Key="otherTable" DataType="src:Table">
+            <DockPanel Margin="7,5,7,5">
+                <TextBlock Text="{Binding Name}" DockPanel.Dock="Top" />
+                <DataGrid ItemsSource="{Binding Columns}"
+                          AutoGenerateColumns="false"
+                          VerticalContentAlignment="Center"
+                          VerticalGridLinesBrush="{x:Null}"
+                          HorizontalGridLinesBrush="Aquamarine"
+                          Margin="0,3,0,0">
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Header="Key" Width="40" SortMemberPath="Key">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Image Height="16" Width="16" Margin="8">
+                                        <Image.Style>
+                                            <Style TargetType="Image">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Key}" Value="{x:Static src:KeyType.Primary}">
+                                                        <Setter Property="Source" Value="1367512141_42264_yellow.ico" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Key}" Value="{x:Static src:KeyType.Foreign}">
+                                                        <Setter Property="Source" Value="1367512141_42264.ico" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Image.Style>
+                                    </Image>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Column" Width="150" Binding="{Binding Name}" IsReadOnly="True" />
+                        <DataGridTextColumn Header="Type" Width="50" Binding="{Binding Type}" IsReadOnly="True" />
+                        <DataGridTemplateColumn>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="{Binding ForeignTable}"
+                                            Command="BrowseForward"
+                                            CommandParameter="{Binding}"
+                                            HorizontalContentAlignment="Stretch">
+                                        <Button.ContentTemplate>
+                                            <DataTemplate>
+                                                <DockPanel HorizontalAlignment="Stretch">
+                                                    <TextBlock Text="→ " DockPanel.Dock="Left" />
+                                                    <TextBlock Text="{Binding}" DockPanel.Dock="Right" />
+                                                </DockPanel>
+                                            </DataTemplate>
+                                        </Button.ContentTemplate>
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ForeignTable}" Value="{x:Null}">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+        </DataTemplate>
+    </UserControl.Resources>
+    
+    <DockPanel DataContext="{Binding ElementName=control}">
+        <StackPanel DockPanel.Dock="Top">
+            <DockPanel DockPanel.Dock="Top">
+                <Label Content="Table:" DockPanel.Dock="Left" />
+                <Button Content="Open" DockPanel.Dock="Right" Command="BrowseHome" CommandParameter="{Binding Path=Text,ElementName=firstTable}" />
+                <ComboBox Name="firstTable" ItemsSource="{Binding FirstTables}" IsEditable="true" />
+            </DockPanel>
+            
+            <Button Content="Create Query" Width="89" HorizontalAlignment="Left" Command="New" />
+        </StackPanel>
+        
+        <ItemsControl Name="TablesList" ItemsSource="{Binding OpenTables}" ItemTemplate="{StaticResource otherTable}">
+            <ItemsControl.Template>
+                <ControlTemplate>
+                    <Border BorderBrush="LightGray" BorderThickness="1">
+                        <ScrollViewer VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Visible">
+                            <StackPanel Orientation="Horizontal" IsItemsHost="True" />
+                        </ScrollViewer>
+                    </Border>
+                </ControlTemplate>
+            </ItemsControl.Template>
+        </ItemsControl>
+    </DockPanel>
+</UserControl>
