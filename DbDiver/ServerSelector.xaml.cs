@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Sql;
-using System.Data.SqlClient;
 using System.Threading;
 using System.Windows;
 using System.Windows.Input;
@@ -16,26 +16,28 @@ namespace DbDiver
     /// </summary>
     public partial class ServerSelector : Window
     {
-		public static readonly DependencyProperty InstancesProperty = DependencyProperty.Register("Instances", typeof(List<DbInstance>), typeof(ServerSelector));
+		public static readonly DependencyProperty InstancesProperty = DependencyProperty.Register("Instances", typeof(ObservableCollection<DbInstance>), typeof(ServerSelector));
 		public static readonly DependencyProperty SelectedServerProperty = DependencyProperty.Register("SelectedServer", typeof(int), typeof(ServerSelector));
 		public static readonly DependencyProperty CanLoginProperty = DependencyProperty.Register("CanLogin", typeof(bool), typeof(ServerSelector));
 		public static readonly DependencyProperty UsernameProperty = DependencyProperty.Register("Username", typeof(string), typeof(ServerSelector));
 
         public ServerSelector()
         {
-            Instances = new List<DbInstance> {
-                new DbInstance { Server = "localhost" }
+            Instances = new ObservableCollection<DbInstance> {
+                new SqlInstance { Server = "localhost" },
+                new MySqlInstance { Server = "localhost" },
             };
             SelectedServer = 0;
             CanLogin = true;
             Cursor = Cursors.AppStarting;
-            ThreadPool.QueueUserWorkItem(discoverInstances);
+            ThreadPool.QueueUserWorkItem(discoverSqlInstances);
+            ThreadPool.QueueUserWorkItem(discoverMySqlInstances);
             InitializeComponent();
         }
 
-		public List<DbInstance> Instances
+        public ObservableCollection<DbInstance> Instances
 		{
-			get { return (List<DbInstance>)GetValue(InstancesProperty); }
+            get { return (ObservableCollection<DbInstance>)GetValue(InstancesProperty); }
 			set { SetValue(InstancesProperty, value); }
 		}
 		public int SelectedServer
@@ -54,19 +56,14 @@ namespace DbDiver
 			set { SetValue(UsernameProperty, value); }
 		}
 
-        private void discoverInstances(object obj)
+        private void discoverSqlInstances(object obj)
         {
             SqlDataSourceEnumerator enumerator = SqlDataSourceEnumerator.Instance;
             DataTable sources = enumerator.GetDataSources();
-            List<DbInstance> instances = new List<DbInstance>
-                {
-                    new DbInstance {
-                        Server = "localhost"
-                    }
-                };
+            List<DbInstance> instances = new List<DbInstance>();
 
             foreach (DataRow source in sources.Rows)
-                instances.Add(new DbInstance
+                instances.Add(new SqlInstance
                     {
                         Server = source.Field<string>("ServerName"),
                         Instance = source.Field<string>("InstanceName"),
@@ -75,48 +72,39 @@ namespace DbDiver
             Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() => LoadInstances(instances)));
         }
 
+        private void discoverMySqlInstances(object obj)
+        {
+            /* MySQL apparently doesn't implement CreateDataSourceEnumerator
+            MySqlClientFactory factory = new MySqlClientFactory();
+            DbDataSourceEnumerator enumerator = factory.CreateDataSourceEnumerator();
+            List<DbInstance> instances = new List<DbInstance>();
+
+            foreach (DataRow source in enumerator.GetDataSources().Rows)
+                instances.Add(new MySqlInstance
+                {
+                    Server = source.Field<string>("ServerName"),
+                    Instance = source.Field<string>("InstanceName"),
+                });
+
+            Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() => LoadInstances(instances)));
+             */
+        }
+
         private void LoadInstances(List<DbInstance> instances)
         {
-            Instances = instances;
+
+            instances.ForEach(i => Instances.Add(i));
 			CanLogin = true;
-            SelectedServer = 0;
+            //SelectedServer = 0;
             Cursor = Cursors.Arrow;
         }
 
         private void ExecuteLogin(object sender, ExecutedRoutedEventArgs args)
         {
             DbInstance instance = Instances[SelectedServer];
-            Connection connection = new Connection();
+            Connection connection = instance.CreateConnection(Username, Password.Password);
 
             IsEnabled = false;
-
-            if(String.IsNullOrWhiteSpace(Username)){
-                if(String.IsNullOrWhiteSpace(instance.Instance))
-                    connection.ConnectionString = String.Format(
-                        "Server={0};Trusted_Connection=True;",
-                        instance.Server);
-                else
-                    connection.ConnectionString = String.Format(
-                        "Server={0}\\{1};Trusted_Connection=True;",
-                        instance.Server,
-                        instance.Instance);
-            }
-            else{
-                if(String.IsNullOrWhiteSpace(instance.Instance))
-                    connection.ConnectionString = String.Format(
-                        "Server={0};User Id={1};Password={2};",
-                        instance.Server,
-                        Username,
-                        Password.Password);
-                else
-                    connection.ConnectionString = String.Format(
-                        "Server={0}\\{1};User Id={2};Password={3};",
-                        instance.Server,
-                        instance.Instance,
-                        Username,
-                        Password.Password);
-            }
-
 			OpenTools(connection);
         }
 
@@ -131,7 +119,7 @@ namespace DbDiver
                 dialog = new DbTools(connection);
                 dialog.ShowActivated = true;
                 dialog.Show();
-                this.Close();
+                Close();
             }
             catch(Exception ex) {
                 MessageBox.Show(ex.GetType().Name + ":\n " + ex.Message, Title + " Error");
@@ -146,11 +134,10 @@ namespace DbDiver
 
         private void ExecuteRefresh(object sender, ExecutedRoutedEventArgs args) {
             CanLogin = true;
-            Instances = new List<DbInstance> {
-                new DbInstance { Server = "localhost" }
-            };
+            Instances.Clear();
+            Instances.Add(new SqlInstance { Server = "localhost" });
             SelectedServer = 0;
-            ThreadPool.QueueUserWorkItem(discoverInstances);
+            ThreadPool.QueueUserWorkItem(discoverSqlInstances);
         }
 
         private void CanExecuteRefresh(object sender, CanExecuteRoutedEventArgs args) {
@@ -186,13 +173,12 @@ namespace DbDiver
             }
         }
 
-        public class DbInstance
-        {
-            public string Server { get; set; }
-            public string Instance { get; set; }
-            public string Name
-            {
-                get { return String.Format("{0} ({1})", Server, Instance); }
+        private void ExecuteManual(object sender, ExecutedRoutedEventArgs args) {
+            var dialog = new ManualServer();
+
+            if(dialog.ShowDialog() == true) {
+                Instances.Insert(0, dialog.DbInstance);
+                SelectedServer = 0;
             }
         }
     }

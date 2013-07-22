@@ -5,6 +5,7 @@ using System.Data.SqlClient;
 using System.Data.SqlServerCe;
 using System.Linq;
 using System.Text;
+using MySql.Data.MySqlClient;
 
 namespace DbDiver
 {
@@ -18,6 +19,8 @@ namespace DbDiver
                 param = new SqlParameter();
             else if (command is SqlCeCommand)
                 param = new SqlCeParameter();
+            else if (command is MySqlCommand)
+                param = new MySqlParameter();
             else
                 throw new Exception("Can't add value to type: " + command.GetType());
 

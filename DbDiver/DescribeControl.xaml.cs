@@ -72,21 +72,9 @@ namespace DbDiver {
         private void describe(Connection connection, string name)
         {
             try {
-                using (var conn = connection.Get())
-                {
-                    using (var command = conn.CreateCommand())
-                    {
+                string description = connection.DescribeProcedure(name);
 
-                        command.CommandText =
-                            "SELECT Definition " +
-                            "FROM sys.sql_modules m JOIN sys.objects o ON m.object_id = o.object_id " +
-                            //"AND TYPE IN ('FN', 'IF', 'TF', 'P') " +
-                            "WHERE Name = @objname;";
-                        command.AddWithValue("@objname", name.Trim());
-                        updateDescription(Highlight.Sql, command.ExecuteScalar() as string);
-                    }
-                    conn.Close();
-                }
+                updateDescription(Highlight.Sql, description);
             }
             catch (Exception ex){
                 updateDescription(Highlight.Sql,

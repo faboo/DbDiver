@@ -80,6 +80,12 @@ namespace DbDiver
             Tables = tables;
         }
 
+        public void ResetTables()
+        {
+            tablesLoaded = false;
+            UpdateTables();
+        }
+
         private void UpdateTables()
         {
             if (!tablesLoaded)

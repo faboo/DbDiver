@@ -70,6 +70,7 @@ namespace DbDiver {
 
         private void OnSelectedDatabaseChanged(DependencyPropertyChangedEventArgs args){
             Connection.Database = Databases.ElementAt(SelectedDatabase);
+            tables.ResetTables();
         }
 
         private static void OnSelectedDatabaseChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args){

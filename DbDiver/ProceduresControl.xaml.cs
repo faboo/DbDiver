@@ -78,6 +78,12 @@ namespace DbDiver
                 this.Visibility = Visibility.Collapsed;
         }
 
+        public void ResetProcedures()
+        {
+            proceduresLoaded = false;
+            UpdateProcedures();
+        }
+
         private void UpdateProcedures()
         {
             if (!proceduresLoaded)

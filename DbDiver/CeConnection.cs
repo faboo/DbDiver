@@ -30,7 +30,12 @@ namespace DbDiver
             return null;
         }
 
-        public override DataTable GetTables()
+        public override string DescribeProcedure(string name)
+        {
+            throw new NotImplementedException();
+        }
+
+/*        public override DataTable GetTables()
         {
             DataTable results = new DataTable();
 
@@ -58,9 +63,9 @@ namespace DbDiver
             }
 
             return results;
-        }
+        }*/
 
-        protected override void GetPrimaryKeys(string table, Dictionary<int, Key> keys)
+/*        protected override void GetPrimaryKeys(string table, Dictionary<int, Key> keys)
         {
             using (var conn = Get())
             {
@@ -89,6 +94,6 @@ namespace DbDiver
                     }
                 }
             }
-        }
+        }*/
     }
 }

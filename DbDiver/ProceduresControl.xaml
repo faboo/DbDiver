@@ -29,7 +29,7 @@
 							<MenuItem Command="Copy" />
 							<MenuItem Header="Call Module" Command="GoToPage"
 												CommandParameter="{Binding Row}" />
-							<MenuItem Header="Describe Table" Command="src:Commands.Describe"
+							<MenuItem Header="Describe Procedure" Command="src:Commands.Describe"
 									CommandParameter="{Binding Row}" />
 						</ContextMenu>
 					</Setter.Value>

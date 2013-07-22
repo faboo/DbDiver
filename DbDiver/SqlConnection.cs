@@ -2,88 +2,50 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Data.SqlServerCe;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
-using System.Data.SqlClient;
-using System.Threading;
 
 namespace DbDiver
 {
-    public abstract class Connection
+    public class SqlConnection : Connection
     {
-        Mutex mutex;
-        string database;
-        string connString;
-
-        public Connection()
+        protected override DbConnection Create(string connString)
         {
-            mutex = new Mutex();
+            return new System.Data.SqlClient.SqlConnection(connString);
         }
 
-        public string ConnectionString
+        public override DbDataAdapter CreateDataAdapter()
         {
-            get
+            return new SqlDataAdapter();
+        }
+
+        public override List<string> GetDatabases()
+        {
+            List<string> databases = new List<string>();
+
+            using (var conn = Get())
             {
-                string connString = null;
-                mutex.WaitOne();
-                connString = this.connString;
-                mutex.ReleaseMutex();
-                return connString;
+                using (var getDatabases = conn.CreateCommand())
+                {
+                    DbDataReader read;
+
+                    getDatabases.CommandText = "sp_databases";
+                    using (read = getDatabases.ExecuteReader())
+                    {
+                        while (read.Read())
+                            databases.Add(read.GetString(read.GetOrdinal("DATABASE_NAME")));
+
+                        read.Close();
+                    }
+                }
+                conn.Close();
             }
-            set
-            {
-                mutex.WaitOne();
-                connString = value;
-                mutex.ReleaseMutex();
-            }
-        }
-        public string Database {
-            get {
-                string db = null;
-                mutex.WaitOne();
-                db = database;
-                mutex.ReleaseMutex();
-                return db;
-            }
-            set {
-                mutex.WaitOne();
-                database = value;
-                mutex.ReleaseMutex();
-            }
+
+            return databases;
         }
 
-        protected abstract DbConnection Create(string connString);
-
-        public abstract DbDataAdapter CreateDataAdapter();
-
-        public DbConnection Get()
-        {
-            string db = null;
-            string connString = null;
-            DbConnection conn = null;
-
-            mutex.WaitOne();
-            db = database;
-            connString = this.connString;
-            mutex.ReleaseMutex();
-
-            conn = Create(connString);
-
-            conn.Open();
-            if (db != null)
-                conn.ChangeDatabase(db);
-
-            return conn;
-        }
-
-        public abstract List<string> GetDatabases();
-
-        public abstract DataTable GetProcedures();
-
-        public abstract string DescribeProcedure(string name);
-
-        public virtual DataTable GetTables()
+        public override DataTable GetProcedures()
         {
             DataTable results = new DataTable();
 
@@ -91,24 +53,64 @@ namespace DbDiver
             {
                 using (var command = conn.CreateCommand())
                 {
-                    DbDataAdapter adapter = new SqlCeDataAdapter();
+                    DbDataAdapter adapter = new SqlDataAdapter();
 
-                    command.CommandText = "select TABLE_NAME as [Table], 0 as [Rows] "
-                        + "from INFORMATION_SCHEMA.TABLES "
-                        + "where [TABLE_SCHEMA] = @database "
-                        + "group by TABLE_NAME";
-                    command.AddWithValue("@database", conn.Database);
+                    command.CommandText = "SELECT name as 'Procedure', sys.objects.type_desc as 'Type' "
+                                          + "FROM sys.sql_modules "
+                                          + "JOIN sys.objects ON sql_modules.object_id = objects.object_id";
 
                     adapter.SelectCommand = command;
                     adapter.Fill(results);
+                }
 
-                    foreach (DataRow table in results.Rows)
-                    {
-                        command.CommandText = "select count(*) from [" + table.ItemArray[0] + "]";
-                        table.BeginEdit();
-                        table[1] = command.ExecuteScalar();
-                        table.EndEdit();
-                    }
+                conn.Close();
+            }
+
+            return results;
+        }
+
+        public override string DescribeProcedure(string name)
+        {
+            string description;
+
+            using (var conn = Get())
+            {
+                using (var command = conn.CreateCommand())
+                {
+
+                    command.CommandText =
+                        "SELECT Definition " +
+                        "FROM sys.sql_modules m JOIN sys.objects o ON m.object_id = o.object_id " +
+                        //"AND TYPE IN ('FN', 'IF', 'TF', 'P') " +
+                        "WHERE Name = @objname;";
+                    command.AddWithValue("@objname", name.Trim());
+                    description = command.ExecuteScalar() as string;
+                }
+                conn.Close();
+            }
+
+            return description;
+        }
+
+        public override DataTable GetTables()
+        {
+            DataTable results = new DataTable();
+
+            using (var conn = Get())
+            {
+                using (var command = conn.CreateCommand())
+                {
+                    DbDataAdapter adapter = new SqlDataAdapter();
+
+                    command.CommandText = "SELECT name as 'Table', SUM(rows) as 'Rows' "
+                        + "FROM sys.tables "
+                        + "INNER JOIN sys.partitions "
+                        + "ON sys.partitions.OBJECT_ID = sys.tables.OBJECT_ID "
+                        + "WHERE is_ms_shipped = 0 AND index_id IN (1,0) "
+                        + "GROUP BY name";
+
+                    adapter.SelectCommand = command;
+                    adapter.Fill(results);
                 }
             }
 
@@ -125,14 +127,16 @@ namespace DbDiver
             return keys;
         }
 
-        protected virtual void GetPrimaryKeys(string table, Dictionary<int, Key> keys)
+        protected override void GetPrimaryKeys(string table, Dictionary<int, Key> keys)
         {
             using (var conn = Get())
             {
                 using (var command = conn.CreateCommand())
                 {
-                    command.CommandText = "select [ordinal_position] from [INFORMATION_SCHEMA].[INDEXES] "
-                        + "where [PRIMARY_KEY] = 1 AND [TABLE_NAME] = @tableName";
+                    command.CommandText = "SELECT ordinal_position "
+                        + "FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE "
+                        + "WHERE OBJECTPROPERTY(OBJECT_ID(constraint_name), 'IsPrimaryKey') = 1 "
+                        + "AND table_name = @tableName";
                     command.AddWithValue("@tableName", table);
 
                     using (var reader = command.ExecuteReader())
@@ -156,13 +160,14 @@ namespace DbDiver
             }
         }
 
-        protected virtual void GetForeignKeys(string table, Dictionary<int, Key> keys)
+/*        protected virtual void GetForeignKeys(string table, Dictionary<int, Key> keys)
         {
             using (var conn = Get())
             {
                 using (var command = conn.CreateCommand())
                 {
-                    command.CommandText = 
+
+                    command.CommandText =
                         "select [parent_column].[ORDINAL_POSITION] as [parent_column_id], [referenced_constraint].[TABLE_NAME] as [name], [referenced_key].[COLUMN_NAME] as [key name] "
                         + "from   [INFORMATION_SCHEMA].[TABLE_CONSTRAINTS] [parent_constraints] "
 
@@ -207,9 +212,9 @@ namespace DbDiver
                     }
                 }
             }
-        }
+        }*/
 
-        protected virtual void GetColumns(Table table)
+        /*protected virtual void GetColumns(Table table)
         {
             using (var conn = Get())
             {
@@ -238,69 +243,6 @@ namespace DbDiver
                 }
                 conn.Close();
             }
-        }
-
-        public Table GetTable(string name)
-        {
-            Dictionary<int, Key> keys = GetKeys(name);
-            Table table = new Table
-            {
-                Name = name
-            };
-
-            GetColumns(table);
-
-            foreach (var column in table.Columns.Where(c => keys.ContainsKey(c.Position)))
-            {
-                Key key = keys[column.Position];
-                column.Key = key.Type;
-                column.ForeignTable = key.ForeignTable;
-                column.ForeignColumn = key.ForeignColumn;
-                if (key.Type == KeyType.Primary)
-                    table.Primary = column;
-            }
-
-            return table;
-        }
-    }
-
-    public enum KeyType
-    {
-        None,
-        Primary,
-        Foreign,
-        Unique,
-        Comosite
-    }
-
-    public class Key
-    {
-        public KeyType Type { get; set; }
-        public int Column { get; set; }
-        public string ForeignTable { get; set; }
-        public string ForeignColumn { get; set; }
-    }
-
-    public class Table
-    {
-        public string Name { get; set; }
-        public IList<Column> Columns { get; set; }
-        public Column Primary { get; set; }
-
-        public Table()
-        {
-            Columns = new List<Column>();
-        }
-    }
-
-    public class Column
-    {
-        public int Position { get; set; }
-        public Table Table { get; set; }
-        public KeyType Key { get; set; }
-        public string Name { get; set; }
-        public string Type { get; set; }
-        public string ForeignTable { get; set; }
-        public string ForeignColumn { get; set; }
+        }*/
     }
 }

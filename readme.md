@@ -34,6 +34,7 @@ TODO
 * Need a method for editing table data in place.
 * Need a method for crawling the relationships between concrete rows of data.
 * Oracle, MySQL, and PostgreSQL support.
+* Improve handling of login errors.
 
 
 Copying
