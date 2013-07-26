@@ -16,27 +16,27 @@
 	</Window.CommandBindings>
   <StackPanel HorizontalAlignment="Stretch" Margin="7">
 		<DockPanel>
-			<Button Content="Manual..." Command="New"  Margin="3,0,0,0" DockPanel.Dock="Right" />
 			<Button Content="File..." Command="Find"  Margin="3,0,0,0" DockPanel.Dock="Right" />
+			<Button Content="Manual..." Command="New"  Margin="3,0,0,0" DockPanel.Dock="Right" />
 			<Button Command="Refresh" DockPanel.Dock="Right">
 				<Image Source="1366731250_7685.ico" Height="21" />
 			</Button>
-			<ComboBox SelectedIndex="{Binding SelectedServer}"  ItemsSource="{Binding Instances}" DisplayMemberPath="Name" />
+			<ComboBox SelectedItem="{Binding SelectedServer}"  ItemsSource="{Binding Instances}" DisplayMemberPath="Name" />
 		</DockPanel>
 
-		<DockPanel Margin="0,3,0,0">
+		<DockPanel Margin="0,13,0,0">
 			<Label Content="Username:" DockPanel.Dock="Left"/>
 			<TextBox Text="{Binding Username}" />
 		</DockPanel>
 
-		<DockPanel Margin="0,0,0,3">
+		<DockPanel Margin="0,0,0,7">
 			<Label Content="Password:" DockPanel.Dock="Left"/>
 			<PasswordBox Name="Password" />
 		</DockPanel>
 
 		<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-			<Button Content="Login" IsDefault="true" Command="Open" />
-			<Button Content="Quit" IsCancel="true" Command="Close" />
+			<Button Content="Login" IsDefault="true" Command="Open" Width="80" Margin="3" />
+			<Button Content="Quit" IsCancel="true" Command="Close" Width="80" Margin="3" />
 		</StackPanel>
   </StackPanel>
 </Window>
