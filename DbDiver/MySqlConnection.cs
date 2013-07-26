@@ -159,8 +159,10 @@ namespace DbDiver
                         + "[REFERENCED_COLUMN_NAME] as [key name] "
                         + "from "
                         + "[INFORMATION_SCHEMA].[KEY_COLUMN_USAGE] where "
-                        + "[REFERENCED_TABLE_NAME] is not null and [TABLE_NAME] = @tableName";
+                        + "[REFERENCED_TABLE_NAME] is not null and [TABLE_NAME] = @tableName "
+                        + "and [TABLE_SCHEMA] = @database";
                     command.AddWithValue("@tableName", table);
+                    command.AddWithValue("@database", conn.Database);
 
                     using (var reader = command.ExecuteReader())
                     {

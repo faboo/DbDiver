@@ -35,7 +35,7 @@ namespace DbDiver
             throw new NotImplementedException();
         }
 
-/*        public override DataTable GetTables()
+        public override DataTable GetTables()
         {
             DataTable results = new DataTable();
 
@@ -63,7 +63,7 @@ namespace DbDiver
             }
 
             return results;
-        }*/
+        }
 
 /*        protected override void GetPrimaryKeys(string table, Dictionary<int, Key> keys)
         {

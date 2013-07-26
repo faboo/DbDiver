@@ -24,10 +24,7 @@
 	</Window.Resources>
 	
 	<StackPanel Grid.IsSharedSizeScope="True" DataContext="{Binding ElementName=window}" Margin="7">
-		<ComboBox Name="typeBox" SelectedValue="{Binding Type}" IsEditable="false" DockPanel.Dock="Top" Margin="0,0,0,5">
-			<s:String>MS SQL</s:String>
-			<s:String>MySQL</s:String>
-		</ComboBox>
+		<ComboBox Name="typeBox" ItemsSource="{Binding Types}" DisplayMemberPath="Item1" SelectedItem="{Binding Type}" IsEditable="false" DockPanel.Dock="Top" Margin="0,0,0,5" />
 
 		<Grid>
 			<Label Content="Address" />
@@ -38,7 +35,7 @@
 				<Style TargetType="Grid" BasedOn="{StaticResource {x:Type Grid}}">
 					<Setter Property="IsEnabled" Value="False" />
 					<Style.Triggers>
-						<DataTrigger Binding="{Binding DbType}" Value="MS SQL">
+						<DataTrigger Binding="{Binding Type.Item1}" Value="MS SQL">
 							<Setter Property="IsEnabled" Value="True" />
 						</DataTrigger>
 					</Style.Triggers>

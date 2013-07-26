@@ -1,17 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlServerCe;
 using System.Linq;
-using System.Text;
-using System.Data.SqlClient;
 using System.Threading;
 
 namespace DbDiver
 {
     public abstract class Connection
     {
+        const string DB_CHECK = "(([TABLE_CATALOG] is null and [TABLE_SCHEMA] is null) or ([TABLE_CATALOG] is null and [TABLE_SCHEMA] = @database) or [TABLE_CATALOG] = @database)";
         Mutex mutex;
         string database;
         string connString;
@@ -91,12 +89,12 @@ namespace DbDiver
             {
                 using (var command = conn.CreateCommand())
                 {
-                    DbDataAdapter adapter = new SqlCeDataAdapter();
+                    DbDataAdapter adapter = CreateDataAdapter();
 
                     command.CommandText = "select TABLE_NAME as [Table], 0 as [Rows] "
                         + "from INFORMATION_SCHEMA.TABLES "
-                        + "where [TABLE_SCHEMA] = @database "
-                        + "group by TABLE_NAME";
+                        + "where "+DB_CHECK+" "
+                        + "order by TABLE_NAME";
                     command.AddWithValue("@database", conn.Database);
 
                     adapter.SelectCommand = command;
@@ -132,8 +130,10 @@ namespace DbDiver
                 using (var command = conn.CreateCommand())
                 {
                     command.CommandText = "select [ordinal_position] from [INFORMATION_SCHEMA].[INDEXES] "
-                        + "where [PRIMARY_KEY] = 1 AND [TABLE_NAME] = @tableName";
+                        + "where [PRIMARY_KEY] = 1 and [TABLE_NAME] = @tableName "
+                        + "and " + DB_CHECK;
                     command.AddWithValue("@tableName", table);
+                    command.AddWithValue("@database", conn.Database);
 
                     using (var reader = command.ExecuteReader())
                     {
@@ -164,7 +164,7 @@ namespace DbDiver
                 {
                     command.CommandText = 
                         "select [parent_column].[ORDINAL_POSITION] as [parent_column_id], [referenced_constraint].[TABLE_NAME] as [name], [referenced_key].[COLUMN_NAME] as [key name] "
-                        + "from   [INFORMATION_SCHEMA].[TABLE_CONSTRAINTS] [parent_constraints] "
+                        + "from   [INFORMATION_SCHEMA].[TABLE_CONSTRAINTS] as [parent_constraints] "
 
                         + "inner join [INFORMATION_SCHEMA].[KEY_COLUMN_USAGE] [parent_key] "
                         + "on [parent_constraints].[CONSTRAINT_SCHEMA] = [parent_key].[CONSTRAINT_SCHEMA] "
@@ -185,9 +185,11 @@ namespace DbDiver
                         + "on [parent_constraints].[TABLE_NAME] = [parent_column].[TABLE_NAME] "
                         + "and [parent_key].[COLUMN_NAME] = [parent_column].[COLUMN_NAME] "
                         + "where [parent_constraints].[CONSTRAINT_TYPE] = 'FOREIGN KEY' "
-                        + "and [parent_constraints].[TABLE_NAME] = @tableName";
+                        + "and [parent_constraints].[TABLE_NAME] = @tableName "
+                        + "and (([parent_constraints].[TABLE_CATALOG] is null and [parent_constraints].[TABLE_SCHEMA] is null) or ([parent_constraints].[TABLE_CATALOG] is null and [parent_constraints].[TABLE_SCHEMA] = @database) or [parent_constraints].[TABLE_CATALOG] = @database) ";
 
                     command.AddWithValue("@tableName", table);
+                    command.AddWithValue("@database", conn.Database);
 
                     using (var reader = command.ExecuteReader())
                     {
@@ -216,8 +218,11 @@ namespace DbDiver
                 using (var command = conn.CreateCommand())
                 {
                     command.CommandText = "select [ORDINAL_POSITION], [COLUMN_NAME], [DATA_TYPE], [IS_NULLABLE] "
-                        + "from [INFORMATION_SCHEMA].[COLUMNS] where [TABLE_NAME] = @tableName";
+                        + "from [INFORMATION_SCHEMA].[COLUMNS] "
+                        + "where [TABLE_NAME] = @tableName "
+                        + "and "+DB_CHECK;
                     command.AddWithValue("@tableName", table.Name);
+                    command.AddWithValue("@database", conn.Database);
 
                     using (var reader = command.ExecuteReader())
                     {

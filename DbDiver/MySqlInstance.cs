@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 namespace DbDiver
 {
-    public class MySqlInstance : DbInstance
+    public class MySqlInstance : NetworkInstance
     {
         protected override string Type
         {

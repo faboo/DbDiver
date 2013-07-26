@@ -64,11 +64,14 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="CeConnection.cs" />
+    <Compile Include="CeInstance.cs" />
+    <Compile Include="CollectionExtension.cs" />
     <Compile Include="Commands.cs" />
     <Compile Include="Connection.cs" />
     <Compile Include="CrawlEventArgs.cs" />
     <Compile Include="DbInstance.cs" />
     <Compile Include="DbParametersCollectionExtension.cs" />
+    <Compile Include="DbProvider.cs" />
     <Compile Include="FrameworkElementExtension.cs" />
     <Compile Include="GridExtension.cs" />
     <Compile Include="Int32Extension.cs" />
@@ -85,8 +88,12 @@
       <DependentUpon>QueryControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="QueryEventArgs.cs" />
-    <Compile Include="SqlConnection.cs" />
-    <Compile Include="SqlInstance.cs" />
+    <Compile Include="SqlConnection.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="SqlInstance.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="TableCrawlControl.xaml.cs">
       <DependentUpon>TableCrawlControl.xaml</DependentUpon>
     </Compile>

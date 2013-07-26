@@ -3,7 +3,7 @@ using System.Text;
 
 namespace DbDiver
 {
-    public class SqlInstance : DbInstance
+    public class SqlInstance : NetworkInstance
     {
         protected override string Type
         {
