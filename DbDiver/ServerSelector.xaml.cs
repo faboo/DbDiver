@@ -20,17 +20,14 @@ namespace DbDiver
     public partial class ServerSelector : Window
     {
         public static readonly DependencyProperty InstancesProperty = DependencyProperty.Register("Instances", typeof(ObservableCollection<NetworkInstance>), typeof(ServerSelector));
-		public static readonly DependencyProperty SelectedServerProperty = DependencyProperty.Register("SelectedServer", typeof(int), typeof(ServerSelector));
+        public static readonly DependencyProperty SelectedServerProperty = DependencyProperty.Register("SelectedServer", typeof(NetworkInstance), typeof(ServerSelector));
 		public static readonly DependencyProperty CanLoginProperty = DependencyProperty.Register("CanLogin", typeof(bool), typeof(ServerSelector));
 		public static readonly DependencyProperty UsernameProperty = DependencyProperty.Register("Username", typeof(string), typeof(ServerSelector));
 
         public ServerSelector()
         {
-            Instances = new ObservableCollection<NetworkInstance> {
-                new SqlInstance { Server = "localhost" },
-                new MySqlInstance { Server = "localhost" },
-            };
-            SelectedServer = 0;
+            Instances = new ObservableCollection<NetworkInstance>();
+            ResetInstances();
             CanLogin = true;
             Cursor = Cursors.AppStarting;
             ThreadPool.QueueUserWorkItem(discoverSqlInstances);
@@ -42,9 +39,9 @@ namespace DbDiver
             get { return (ObservableCollection<NetworkInstance>)GetValue(InstancesProperty); }
 			set { SetValue(InstancesProperty, value); }
 		}
-		public int SelectedServer
+        public NetworkInstance SelectedServer
 		{
-			get { return (int)GetValue(SelectedServerProperty); }
+            get { return (NetworkInstance)GetValue(SelectedServerProperty); }
 			set { SetValue(SelectedServerProperty, value); }
 		}
 		public bool CanLogin
@@ -75,7 +72,7 @@ namespace DbDiver
 
         private void ExecuteLogin(object sender, ExecutedRoutedEventArgs args)
         {
-            NetworkInstance instance = Instances[SelectedServer];
+            NetworkInstance instance = SelectedServer;
             Connection connection = instance.CreateConnection(Username, Password.Password);
 
             IsEnabled = false;
@@ -110,11 +107,22 @@ namespace DbDiver
             Application.Current.Shutdown();
         }
 
+        private void ResetInstances()
+        {
+            Instances.Clear();
+            DbProvider.NetworkProviders.ForEach(
+                p =>
+                {
+                    var i = p.Item3();
+                    i.Server = "localhost";
+                    Instances.Add(i);
+                });
+            SelectedServer = Instances.First();
+        }
+
         private void ExecuteRefresh(object sender, ExecutedRoutedEventArgs args) {
             CanLogin = true;
-            Instances.Clear();
-            Instances.Add(new SqlInstance { Server = "localhost" });
-            SelectedServer = 0;
+            ResetInstances();
             ThreadPool.QueueUserWorkItem(discoverSqlInstances);
         }
 
@@ -154,7 +162,7 @@ namespace DbDiver
 
             if(dialog.ShowDialog() == true) {
                 Instances.Insert(0, dialog.DbInstance);
-                SelectedServer = 0;
+                SelectedServer = Instances.First();
             }
         }
     }
