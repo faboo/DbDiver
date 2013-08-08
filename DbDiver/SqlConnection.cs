@@ -117,23 +117,13 @@ namespace DbDiver
             return results;
         }
 
-        private Dictionary<int, Key> GetKeys(string table)
-        {
-            Dictionary<int, Key> keys = new Dictionary<int, Key>();
-
-            GetForeignKeys(table, keys);
-            GetPrimaryKeys(table, keys);
-
-            return keys;
-        }
-
         protected override void GetPrimaryKeys(string table, Dictionary<int, Key> keys)
         {
             using (var conn = Get())
             {
                 using (var command = conn.CreateCommand())
                 {
-                    command.CommandText = "SELECT ordinal_position "
+                    command.CommandText = "SELECT ordinal_position, column_name "
                         + "FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE "
                         + "WHERE OBJECTPROPERTY(OBJECT_ID(constraint_name), 'IsPrimaryKey') = 1 "
                         + "AND table_name = @tableName";
@@ -147,6 +137,7 @@ namespace DbDiver
                             {
                                 Type = KeyType.Primary,
                                 Column = reader.GetInt32(0),
+                                Name = reader.GetString(1),
                             };
                             if (!keys.ContainsKey(key.Column))
                                 keys[key.Column] = key;

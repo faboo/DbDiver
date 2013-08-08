@@ -138,6 +138,7 @@ namespace DbDiver
                         {
                             Type = KeyType.Primary,
                             Column = position,
+                            Name = index["column_name"].ToString(),
                         };
                         if (!keys.ContainsKey(key.Column))
                             keys[key.Column] = key;

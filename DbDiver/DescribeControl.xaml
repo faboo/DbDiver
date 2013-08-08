@@ -13,9 +13,6 @@
         <CommandBinding Command="Open" Executed="ExecuteCrawl" />
 			<CommandBinding Command="src:Commands.FindNext" Executed="ExecuteFind" />
     </UserControl.CommandBindings>
-    <UserControl.InputBindings>
-        <KeyBinding Key="F3" Command="Find" />
-    </UserControl.InputBindings>
     <DockPanel DataContext="{Binding ElementName=control}">
         <DockPanel DockPanel.Dock="Top">
             <Label Content="Function or Procedure: " DockPanel.Dock="Left" />

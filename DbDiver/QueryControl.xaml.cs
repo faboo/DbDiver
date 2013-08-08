@@ -68,38 +68,34 @@ namespace DbDiver {
             try
             {
                 using (var conn = connection.Get())
+                using (var command = conn.CreateCommand())
                 {
-                    using (var command = conn.CreateCommand())
-                    {
-                        DataSet results = new DataSet();
-                        DbDataAdapter adapter = connection.CreateDataAdapter();
+                    DataSet results = new DataSet();
+                    DbDataAdapter adapter = connection.CreateDataAdapter();
 
-                        command.CommandText = query;
-                        adapter.SelectCommand = command;
-                        adapter.Fill(results);
+                    command.CommandText = query;
+                    adapter.SelectCommand = command;
+                    adapter.Fill(results);
 
-                        foreach (var result in results.Tables)
-                            Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action<DataTable>(SetResults), result);
-                    }
-                    conn.Close();
+                    foreach (var result in results.Tables)
+                        Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action<DataTable>(SetResults), result);
                 }
             }
             catch (Exception ex)
             {
                 Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(
-                    () => MessageBox.Show(ex.Message, "DbDiver")));
-            }
-            finally
-            {
-                Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
-                    Cursor = Cursors.Arrow));
-
+                    () =>
+                    {
+                        MessageBox.Show(ex.Message, "DbDiver");
+                        Cursor = Cursors.Arrow;
+                    }));
             }
         }
 
         private void SetResults(DataTable results)
         {
             Results.Add(results);
+            Cursor = Cursors.Arrow;
         }
 
         private void ExecuteFind(object sender, ExecutedRoutedEventArgs args)

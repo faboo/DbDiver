@@ -12,9 +12,6 @@
 		<CommandBinding Command="GoToPage" Executed="ExecuteQueryTable" />
 		<CommandBinding Command="src:Commands.Describe" Executed="ExecuteDescribe" CanExecute="CanExecuteDescribe" />
 	</UserControl.CommandBindings>
-  <UserControl.InputBindings>
-    <KeyBinding Key="F3" Command="Find" />
-  </UserControl.InputBindings>
   <DataGrid Name="Data" ItemsSource="{Binding Path=Tables,ElementName=control}"
             IsReadOnly="true"
             VerticalGridLinesBrush="LightGray"

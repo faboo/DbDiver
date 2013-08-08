@@ -76,31 +76,44 @@ namespace DbDiver
             Connection connection = instance.CreateConnection(Username, Password.Password);
 
             IsEnabled = false;
-			OpenTools(connection);
+            Cursor = Cursors.Wait;
+			ThreadPool.QueueUserWorkItem(tryLogin, connection);
         }
 
         private void CanExecuteLogin(object sender, CanExecuteRoutedEventArgs args) {
             args.CanExecute = CanLogin;
         }
 
-		private void OpenTools(Connection connection){
+        private void tryLogin(object connObj) {
             try {
-                DbTools dialog;
+                Connection connection = (Connection)connObj;
 
                 // Test the login credentials:
-                using (var conn = connection.Get())
+                using(var conn = connection.Get())
                     conn.Close();
 
-                dialog = new DbTools(connection);
-                dialog.ShowActivated = true;
-                dialog.Show();
-                Close();
+                Dispatcher.BeginInvoke((Action<Connection>)OpenTools, DispatcherPriority.Background, connection);
             }
             catch(Exception ex) {
-                MessageBox.Show(ex.GetType().Name + ":\n " + ex.Message, Title + " Error");
-                IsEnabled = true;
+                Dispatcher.BeginInvoke((Action<Exception>)ResetWindow, DispatcherPriority.Background, ex);
             }
+        }
+
+		private void OpenTools(Connection connection){
+            DbTools dialog;
+
+            dialog = new DbTools(connection);
+            dialog.ShowActivated = true;
+            dialog.Show();
+            Application.Current.MainWindow = dialog;
+            Close();
 		}
+
+        private void ResetWindow(Exception ex) {
+            MessageBox.Show(ex.GetType().Name + ":\n " + ex.Message, Title + " Error");
+            IsEnabled = true;
+            Cursor = Cursors.Arrow;
+        }
 
         private void ExecuteQuit(object sender, ExecutedRoutedEventArgs args)
         {

@@ -12,10 +12,7 @@
 		<CommandBinding Command="GoToPage" Executed="ExecuteQueryModule" />
 		<CommandBinding Command="src:Commands.Describe" Executed="ExecuteDescribe" CanExecute="CanExecuteDescribe" />
 	</UserControl.CommandBindings>
-  <UserControl.InputBindings>
-    <KeyBinding Key="F3" Command="Find" />
-  </UserControl.InputBindings>
-  <DataGrid Name="Data"
+	<DataGrid Name="Data"
             ItemsSource="{Binding Path=Procedures,ElementName=control}"
             IsReadOnly="true"
             VerticalGridLinesBrush="LightGray"

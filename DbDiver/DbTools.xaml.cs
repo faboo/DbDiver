@@ -25,6 +25,14 @@ namespace DbDiver {
             Connection = connection;
             ThreadPool.QueueUserWorkItem(obj => loadDatabases(connection));
             InitializeComponent();
+            PreviewKeyDown += (s, a) =>
+                           {
+                               if (a.Key == System.Windows.Input.Key.F3)
+                               {
+                                   Commands.FindNext.Execute(Search.ToLower(), tabs.SelectedContent as IInputElement);
+                                   a.Handled = true;
+                               }
+                           };
         }
 
         public Connection Connection

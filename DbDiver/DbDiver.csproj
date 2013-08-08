@@ -72,6 +72,9 @@
     <Compile Include="DbInstance.cs" />
     <Compile Include="DbParametersCollectionExtension.cs" />
     <Compile Include="DbProvider.cs" />
+    <Compile Include="EditData.xaml.cs">
+      <DependentUpon>EditData.xaml</DependentUpon>
+    </Compile>
     <Compile Include="FrameworkElementExtension.cs" />
     <Compile Include="GridExtension.cs" />
     <Compile Include="Int32Extension.cs" />
@@ -105,6 +108,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="DescribeControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="EditData.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -11,7 +11,7 @@
 		<CommandBinding Command="src:Commands.FindNext" Executed="ExecuteFind" />
 		<CommandBinding Command="Open" Executed="RunQueryExecuted"  CanExecute="CanRunQuery" />
   </UserControl.CommandBindings>
-  <Grid DataContext="{Binding ElementName=control}">
+	<Grid DataContext="{Binding ElementName=control}">
     <Grid.RowDefinitions>
       <RowDefinition Height="50" />
       <RowDefinition Height="5" />

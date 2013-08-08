@@ -64,36 +64,5 @@ namespace DbDiver
 
             return results;
         }
-
-/*        protected override void GetPrimaryKeys(string table, Dictionary<int, Key> keys)
-        {
-            using (var conn = Get())
-            {
-                using (var command = conn.CreateCommand())
-                {
-                    command.CommandText = "select [ordinal_position] from [INFORMATION_SCHEMA].[INDEXES] "
-                        + "where [PRIMARY_KEY] = 1 AND [TABLE_NAME] = @tableName";
-                    command.AddWithValue("@tableName", table);
-
-                    using (var reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            Key key = new Key
-                            {
-                                Type = KeyType.Primary,
-                                Column = reader.GetInt32(0),
-                            };
-                            if (!keys.ContainsKey(key.Column))
-                                keys[key.Column] = key;
-                            else
-                                keys[key.Column].Type = KeyType.Primary;
-                        }
-
-                        reader.Close();
-                    }
-                }
-            }
-        }*/
     }
 }

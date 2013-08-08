@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlServerCe;
 using System.Linq;
+using System.Text;
 using System.Threading;
 
 namespace DbDiver
@@ -86,27 +88,24 @@ namespace DbDiver
             DataTable results = new DataTable();
 
             using (var conn = Get())
+            using (var command = conn.CreateCommand())
+            using (var adapter = CreateDataAdapter())
             {
-                using (var command = conn.CreateCommand())
+                command.CommandText = "select TABLE_NAME as [Table], 0 as [Rows] "
+                                        + "from INFORMATION_SCHEMA.TABLES "
+                                        + "where " + DB_CHECK + " "
+                                        + "order by TABLE_NAME";
+                command.AddWithValue("@database", conn.Database);
+
+                adapter.SelectCommand = command;
+                adapter.Fill(results);
+
+                foreach (DataRow table in results.Rows)
                 {
-                    DbDataAdapter adapter = CreateDataAdapter();
-
-                    command.CommandText = "select TABLE_NAME as [Table], 0 as [Rows] "
-                        + "from INFORMATION_SCHEMA.TABLES "
-                        + "where "+DB_CHECK+" "
-                        + "order by TABLE_NAME";
-                    command.AddWithValue("@database", conn.Database);
-
-                    adapter.SelectCommand = command;
-                    adapter.Fill(results);
-
-                    foreach (DataRow table in results.Rows)
-                    {
-                        command.CommandText = "select count(*) from [" + table.ItemArray[0] + "]";
-                        table.BeginEdit();
-                        table[1] = command.ExecuteScalar();
-                        table.EndEdit();
-                    }
+                    command.CommandText = "select count(*) from [" + table.ItemArray[0] + "]";
+                    table.BeginEdit();
+                    table[1] = command.ExecuteScalar();
+                    table.EndEdit();
                 }
             }
 
@@ -123,13 +122,21 @@ namespace DbDiver
             return keys;
         }
 
+        public IEnumerable<Key> GetPrimaryKeys(string table){
+            var keys = new Dictionary<int, Key>();
+                   
+            GetPrimaryKeys(table, keys);
+
+			return keys.Values;
+		}
+
         protected virtual void GetPrimaryKeys(string table, Dictionary<int, Key> keys)
         {
             using (var conn = Get())
             {
                 using (var command = conn.CreateCommand())
                 {
-                    command.CommandText = "select [ordinal_position] from [INFORMATION_SCHEMA].[INDEXES] "
+                    command.CommandText = "select [ordinal_position], [column_name] from [INFORMATION_SCHEMA].[INDEXES] "
                         + "where [PRIMARY_KEY] = 1 and [TABLE_NAME] = @tableName "
                         + "and " + DB_CHECK;
                     command.AddWithValue("@tableName", table);
@@ -143,6 +150,7 @@ namespace DbDiver
                             {
                                 Type = KeyType.Primary,
                                 Column = reader.GetInt32(0),
+                                Name = reader.GetString(1),
                             };
                             if (!keys.ContainsKey(key.Column))
                                 keys[key.Column] = key;
@@ -267,6 +275,91 @@ namespace DbDiver
 
             return table;
         }
+
+        public DataTable GetTableData(string name, int? max, string where)
+        {
+            DataSet data = new DataSet();
+
+            using (var conn = Get())
+            using (var command = conn.CreateCommand())
+            using (var adapter = CreateDataAdapter())
+            {
+                command.CommandText = String.Format(
+                    "select {2} * from [{0}] {1}",
+                    name,
+                    String.IsNullOrWhiteSpace(where)? "" : "where "+where,
+                    max == null ? "" : "top " + max);
+                adapter.SelectCommand = command;
+                adapter.Fill(data);
+            }
+
+            return data.Tables.Count > 0? data.Tables[0] : new DataTable();
+        }
+
+        public virtual void UpdateRow(DataRow row, Table table)
+        {
+            using (var conn = Get())
+            using (var command = conn.CreateCommand())
+            {
+                StringBuilder update = new StringBuilder();
+
+                update.AppendFormat("update {0} set ", table.Name);
+
+                for(int idx = 0; idx < row.Table.Columns.Count; idx += 1)
+                {
+                    DataColumn column = row.Table.Columns[idx];
+                    if (!column.ColumnName.Equals(table.Primary.Name))
+                    {
+                        update.AppendFormat("[{0}] = @{0}{1}", column.ColumnName,
+                                            idx < row.Table.Columns.Count - 1 ? "," : " ");
+                        command.AddWithValue("@" + column.ColumnName, row[column, DataRowVersion.Current]);
+                    }
+                }
+
+                update.Append("where ");
+
+                if(table.Primary != null)
+                {
+                    update.AppendFormat("[{0}] = @_key{0} ", table.Primary.Name);
+                    command.AddWithValue("@_key" + table.Primary.Name, row[table.Primary.Name, DataRowVersion.Original]);
+                }
+
+                command.CommandText = update.ToString();
+                command.ExecuteNonQuery();
+            }
+        }
+
+        public virtual void DeleteRow(DataRow row, Table table)
+        {
+            using (var conn = Get())
+            using (var command = conn.CreateCommand())
+            {
+                StringBuilder update = new StringBuilder();
+
+                update.AppendFormat("delete from {0} where ", table.Name);
+
+                if (table.Primary != null)
+                {
+                    update.AppendFormat("[{0}] = @_key{0} ", table.Primary.Name);
+                    command.AddWithValue("@_key" + table.Primary.Name, row[table.Primary.Name, DataRowVersion.Original]);
+                }
+                else
+                {
+                    for (int idx = 0; idx < row.Table.Columns.Count; idx += 1)
+                    {
+                        DataColumn column = row.Table.Columns[idx];
+                        update.AppendFormat("[{0}] = @{0} {1}", column.ColumnName,
+                                            idx < row.Table.Columns.Count - 1 ? "and" : "");
+                        command.AddWithValue("@" + column.ColumnName, row[column, DataRowVersion.Current]);
+                    }
+
+                    throw new Exception("Can't delete from tables without primary keys yet.");
+                }
+
+                command.CommandText = update.ToString();
+                command.ExecuteNonQuery();
+            }
+        }
     }
 
     public enum KeyType
@@ -282,6 +375,7 @@ namespace DbDiver
     {
         public KeyType Type { get; set; }
         public int Column { get; set; }
+        public string Name { get; set; }
         public string ForeignTable { get; set; }
         public string ForeignColumn { get; set; }
     }

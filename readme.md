@@ -23,7 +23,7 @@ Supported Databases Systems
 ---------------------------
 
 At the moment, DbDiver supports Microsoft Sql Server (including network server
-discovery and integrated authentication) and Sql Server Compact Edition.
+discovery and integrated authentication), Sql Server Compact Edition, and MySQL.
 
 
 TODO
@@ -32,9 +32,10 @@ TODO
 * Find in the Lookup tab is broken; a proper implementation is unfortunately a
   bit complicated.
 * Need a method for editing table data in place.
+** This work is about half done.
 * Need a method for crawling the relationships between concrete rows of data.
 * Oracle, MySQL, and PostgreSQL support.
-* Improve handling of login errors.
+** MySQL is now supported.
 
 
 Copying
