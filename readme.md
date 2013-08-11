@@ -1,15 +1,15 @@
 DbDiver
 =======
 
-DbDiver is a tool for exploring schema and data that comprise a database. It is
-not an outright replacement for other, more general tools. Instead, its features
-are intended to be convenient for the specific task of becoming familiar with a
-new schema or keeping track of an old, hairy beast.
+DbDiver is a tool for exploring the schema and data that comprise a database. It
+is not an outright replacement for other, more general tools. Instead, its
+features are intended to be convenient for the specific task of becoming
+familiar with a new schema or keeping track of an old, hairy beast.
 
 There are displays to: list the tables in the database and their sizes, and its
 stored procedures and functions; explore the relationships between tables in a
-visual manner; lookup the definitions of stored procedures and functions; and
-run ad-hoc queries.
+visual manner; lookup the definitions of stored procedures and functions; browse
+and edit data in specific tables; and run ad-hoc queries.
 
 All of that's standard fair, and entirely possible from standard tools, but
 DbDiver is designed to provide those specific activities in a simple and quick
@@ -31,11 +31,13 @@ TODO
 
 * Find in the Lookup tab is broken; a proper implementation is unfortunately a
   bit complicated.
-* Need a method for editing table data in place.
-** This work is about half done.
+* Need a method for editing table data in place (mostly done).
+	* Deleting rows should be able to follow FK relationships
+	* It would be nice if adding a row with FKs provided a way to search for
+	  appropriate foreign rows.
 * Need a method for crawling the relationships between concrete rows of data.
 * Oracle, MySQL, and PostgreSQL support.
-** MySQL is now supported.
+	* MySQL is now supported.
 
 
 Copying
