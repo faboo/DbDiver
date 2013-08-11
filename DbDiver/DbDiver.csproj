@@ -75,6 +75,7 @@
     <Compile Include="EditData.xaml.cs">
       <DependentUpon>EditData.xaml</DependentUpon>
     </Compile>
+    <Compile Include="EditDataEventArgs.cs" />
     <Compile Include="FrameworkElementExtension.cs" />
     <Compile Include="GridExtension.cs" />
     <Compile Include="Int32Extension.cs" />

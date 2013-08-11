@@ -12,13 +12,13 @@
 	</UserControl.CommandBindings>
 
 	<DockPanel DataContext="{Binding ElementName=Control}">
-		<StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
-			<Label Content="Table:" Target="TablesBox" Margin="0,0,3,0" />
-			<ComboBox Name="TablesBox" IsEditable="true" ItemsSource="{Binding Tables}" Width="80" />
-			
-			<Label Content="... where:" Target="WhereBox" Margin="7,0,3,0" />
-			<TextBox Name="WhereBox" Width="150" />
-		</StackPanel>
+		<DockPanel DockPanel.Dock="Top">
+			<Label Content="Table:" Target="TablesBox" Margin="0,0,3,0" DockPanel.Dock="Left" />
+			<ComboBox Name="TablesBox" IsEditable="true" Text="{Binding TableName}"  ItemsSource="{Binding Tables}" KeyDown="OnEnterKeyDown" Width="120" DockPanel.Dock="Left" />
+
+			<Label Content="... where:" Target="WhereBox" Margin="7,0,3,0" DockPanel.Dock="Left" />
+			<TextBox Name="WhereBox" KeyDown="OnEnterKeyDown" />
+		</DockPanel>
 		<Button Content="Run" Command="Open" Grid.Row="2" Grid.Column="1" Margin="0 5 0 5" Width="72" DockPanel.Dock="Top" HorizontalAlignment="Left" />
 
 		<DataGrid ItemsSource="{Binding Rows}"

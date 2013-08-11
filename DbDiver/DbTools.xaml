@@ -41,12 +41,12 @@
 				<src:QueryControl x:Name="query" Connection="{Binding Connection}" />
 			</TabItem>
 			<TabItem Header="Tables">
-				<src:TablesControl x:Name="tables"  Connection="{Binding Connection}" OnCrawl="OnCrawl" OnQuery="OnQuery" Search="{Binding Search}" />
+				<src:TablesControl x:Name="tables"  Connection="{Binding Connection}" OnCrawl="OnCrawl" OnQuery="OnQuery" OnEditData="OnEditTableData" Search="{Binding Search}" />
 			</TabItem>
       <TabItem Header="Modules">
 				<src:ProceduresControl x:Name="modules"  Connection="{Binding Connection}" OnLookup="OnLookup" OnQuery="OnQuery" />
       </TabItem>
-			<TabItem Header="Data">
+			<TabItem Header="Data" Name="dataTab">
 				<src:EditData x:Name="editData" Connection="{Binding Connection}" />
 			</TabItem>
 		</TabControl>

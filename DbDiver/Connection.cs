@@ -112,9 +112,9 @@ namespace DbDiver
             return results;
         }
 
-        private Dictionary<int, Key> GetKeys(string table)
+        private Dictionary<string, Key> GetKeys(string table)
         {
-            Dictionary<int, Key> keys = new Dictionary<int, Key>();
+            Dictionary<string, Key> keys = new Dictionary<string, Key>();
 
             GetForeignKeys(table, keys);
             GetPrimaryKeys(table, keys);
@@ -123,14 +123,14 @@ namespace DbDiver
         }
 
         public IEnumerable<Key> GetPrimaryKeys(string table){
-            var keys = new Dictionary<int, Key>();
+            var keys = new Dictionary<string, Key>();
                    
             GetPrimaryKeys(table, keys);
 
 			return keys.Values;
 		}
 
-        protected virtual void GetPrimaryKeys(string table, Dictionary<int, Key> keys)
+        protected virtual void GetPrimaryKeys(string table, Dictionary<string, Key> keys)
         {
             using (var conn = Get())
             {
@@ -152,10 +152,10 @@ namespace DbDiver
                                 Column = reader.GetInt32(0),
                                 Name = reader.GetString(1),
                             };
-                            if (!keys.ContainsKey(key.Column))
-                                keys[key.Column] = key;
+                            if (!keys.ContainsKey(key.Name))
+                                keys[key.Name] = key;
                             else
-                                keys[key.Column].Type = KeyType.Primary;
+                                keys[key.Name].Type = KeyType.Primary;
                         }
 
                         reader.Close();
@@ -164,14 +164,14 @@ namespace DbDiver
             }
         }
 
-        protected virtual void GetForeignKeys(string table, Dictionary<int, Key> keys)
+        protected virtual void GetForeignKeys(string table, Dictionary<string, Key> keys)
         {
             using (var conn = Get())
             {
                 using (var command = conn.CreateCommand())
                 {
                     command.CommandText = 
-                        "select [parent_column].[ORDINAL_POSITION] as [parent_column_id], [referenced_constraint].[TABLE_NAME] as [name], [referenced_key].[COLUMN_NAME] as [key name] "
+                        "select [parent_column].[ORDINAL_POSITION] as [parent_column_id], [parent_column].[COLUMN_NAME] as [parent_column_name], [referenced_constraint].[TABLE_NAME] as [name], [referenced_key].[COLUMN_NAME] as [key name] "
                         + "from   [INFORMATION_SCHEMA].[TABLE_CONSTRAINTS] as [parent_constraints] "
 
                         + "inner join [INFORMATION_SCHEMA].[KEY_COLUMN_USAGE] [parent_key] "
@@ -207,10 +207,11 @@ namespace DbDiver
                             {
                                 Type = KeyType.Foreign,
                                 Column = reader.GetInt32(0),
-                                ForeignTable = reader.GetString(1),
-                                ForeignColumn = reader.GetString(2),
+                                Name = reader.GetString(1),
+                                ForeignTable = reader.GetString(2),
+                                ForeignColumn = reader.GetString(3),
                             };
-                            keys[key.Column] = key;
+                            keys[key.Name] = key;
                         }
 
                         reader.Close();
@@ -255,7 +256,7 @@ namespace DbDiver
 
         public Table GetTable(string name)
         {
-            Dictionary<int, Key> keys = GetKeys(name);
+            Dictionary<string, Key> keys = GetKeys(name);
             Table table = new Table
             {
                 Name = name
@@ -263,14 +264,14 @@ namespace DbDiver
 
             GetColumns(table);
 
-            foreach (var column in table.Columns.Where(c => keys.ContainsKey(c.Position)))
+            foreach (var column in table.Columns.Where(c => keys.ContainsKey(c.Name)))
             {
-                Key key = keys[column.Position];
+                Key key = keys[column.Name];
                 column.Key = key.Type;
                 column.ForeignTable = key.ForeignTable;
                 column.ForeignColumn = key.ForeignColumn;
                 if (key.Type == KeyType.Primary)
-                    table.Primary = column;
+                    table.Primary.Add(column);
             }
 
             return table;
@@ -296,6 +297,30 @@ namespace DbDiver
             return data.Tables.Count > 0? data.Tables[0] : new DataTable();
         }
 
+        protected virtual string PrimaryKeysClause(Table table, DbCommand command, DataRow row) {
+            StringBuilder clause = new StringBuilder();
+
+            if(table.Primary.Count > 0) {
+                for(int idx = 0; idx < table.Primary.Count; idx += 1) {
+                    var primary = table.Primary[idx];
+                    clause.AppendFormat("[{0}] = @key_{0} ", primary.Name);
+                    if(idx < table.Primary.Count - 1)
+                        clause.Append("and ");
+                    command.AddWithValue("@key_" + primary.Name, row[primary.Name, DataRowVersion.Original]);
+                }
+            }
+            else {
+                for(int idx = 0; idx < row.Table.Columns.Count; idx += 1) {
+                    DataColumn column = row.Table.Columns[idx];
+                    clause.AppendFormat("[{0}] = @key_{0} {1}", column.ColumnName,
+                                        idx < row.Table.Columns.Count - 1 ? "and" : "");
+                    command.AddWithValue("@key_" + column.ColumnName, row[column, DataRowVersion.Current]);
+                }
+            }
+
+            return clause.ToString();
+        }
+
         public virtual void UpdateRow(DataRow row, Table table)
         {
             using (var conn = Get())
@@ -308,21 +333,16 @@ namespace DbDiver
                 for(int idx = 0; idx < row.Table.Columns.Count; idx += 1)
                 {
                     DataColumn column = row.Table.Columns[idx];
-                    if (!column.ColumnName.Equals(table.Primary.Name))
+                    if (!table.Primary.Any(p => column.ColumnName.Equals(p.Name)))
                     {
-                        update.AppendFormat("[{0}] = @{0}{1}", column.ColumnName,
-                                            idx < row.Table.Columns.Count - 1 ? "," : " ");
+                        update.AppendFormat("[{0}] = @{0},", column.ColumnName);
                         command.AddWithValue("@" + column.ColumnName, row[column, DataRowVersion.Current]);
                     }
                 }
 
-                update.Append("where ");
-
-                if(table.Primary != null)
-                {
-                    update.AppendFormat("[{0}] = @_key{0} ", table.Primary.Name);
-                    command.AddWithValue("@_key" + table.Primary.Name, row[table.Primary.Name, DataRowVersion.Original]);
-                }
+                update.Remove(update.Length - 1, 1);
+                update.Append(" where ");
+                update.Append(PrimaryKeysClause(table, command, row));
 
                 command.CommandText = update.ToString();
                 command.ExecuteNonQuery();
@@ -334,29 +354,41 @@ namespace DbDiver
             using (var conn = Get())
             using (var command = conn.CreateCommand())
             {
-                StringBuilder update = new StringBuilder();
+                StringBuilder delete = new StringBuilder();
 
-                update.AppendFormat("delete from {0} where ", table.Name);
+                delete.AppendFormat("delete from {0} where ", table.Name);
+                delete.Append(PrimaryKeysClause(table, command, row));
 
-                if (table.Primary != null)
+                command.CommandText = delete.ToString();
+                command.ExecuteNonQuery();
+            }
+        }
+
+        public virtual void InsertRow(DataRow row, Table table)
+        {
+            using (var conn = Get())
+            using (var command = conn.CreateCommand())
+            {
+                StringBuilder insert = new StringBuilder();
+                StringBuilder columns = new StringBuilder();
+                StringBuilder values = new StringBuilder();
+
+
+                for (int idx = 0; idx < row.Table.Columns.Count; idx += 1)
                 {
-                    update.AppendFormat("[{0}] = @_key{0} ", table.Primary.Name);
-                    command.AddWithValue("@_key" + table.Primary.Name, row[table.Primary.Name, DataRowVersion.Original]);
-                }
-                else
-                {
-                    for (int idx = 0; idx < row.Table.Columns.Count; idx += 1)
-                    {
-                        DataColumn column = row.Table.Columns[idx];
-                        update.AppendFormat("[{0}] = @{0} {1}", column.ColumnName,
-                                            idx < row.Table.Columns.Count - 1 ? "and" : "");
-                        command.AddWithValue("@" + column.ColumnName, row[column, DataRowVersion.Current]);
-                    }
+                    DataColumn column = row.Table.Columns[idx];
 
-                    throw new Exception("Can't delete from tables without primary keys yet.");
+                    columns.AppendFormat("[{0}],", column.ColumnName);
+                    values.AppendFormat("@{0},", column.ColumnName);
+                    command.AddWithValue("@" + column.ColumnName, row[column, DataRowVersion.Current]);
                 }
 
-                command.CommandText = update.ToString();
+                columns.Remove(columns.Length - 1, 1);
+                values.Remove(values.Length - 1, 1);
+
+                insert.AppendFormat("insert into {0} ({1}) values ({2})", table.Name, columns, values);
+
+                command.CommandText = insert.ToString();
                 command.ExecuteNonQuery();
             }
         }
@@ -384,11 +416,12 @@ namespace DbDiver
     {
         public string Name { get; set; }
         public IList<Column> Columns { get; set; }
-        public Column Primary { get; set; }
+        public IList<Column> Primary { get; set; }
 
         public Table()
         {
             Columns = new List<Column>();
+            Primary = new List<Column>();
         }
     }
 

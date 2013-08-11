@@ -16,7 +16,7 @@
 	<UserControl.Resources>
         <DataTemplate x:Key="otherTable" DataType="src:Table">
             <DockPanel Margin="7,5,7,5">
-                <TextBlock Text="{Binding Name}" DockPanel.Dock="Top" />
+                <TextBlock Text="{Binding Name}" KeyDown="OnEnterKeyDown" DockPanel.Dock="Top" />
                 <DataGrid ItemsSource="{Binding Columns}"
                           AutoGenerateColumns="false"
                           VerticalContentAlignment="Center"

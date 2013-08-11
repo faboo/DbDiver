@@ -99,8 +99,8 @@ namespace DbDiver {
                 query.AppendFormat("join [{0}] on [{0}].[{1}] = [{2}].[{3}]\n", foreign.Name, key.ForeignColumn, key.Table.Name, key.Name);
             }
 
-            if(OpenTables[0].Primary != null)
-                query.AppendFormat("where [{0}].[{1}] = ", OpenTables[0].Name, OpenTables[0].Primary.Name);
+            if(OpenTables[0].Primary.Count > 0)
+                query.AppendFormat("where [{0}].[{1}] = ", OpenTables[0].Name, OpenTables[0].Primary[0].Name);
 
             RaiseEvent(new QueryEventArgs { Query = query.ToString(), RoutedEvent = OnQueryEvent});
         }
@@ -164,6 +164,14 @@ namespace DbDiver {
                     grid.ScrollIntoView(foundColumn);
                     grid.Focus();
                 }
+            }
+        }
+
+        private void OnEnterKeyDown(object sender, KeyEventArgs args)
+        {
+            if (args.Key == System.Windows.Input.Key.Enter)
+            {
+                ApplicationCommands.Open.Execute(null, this);
             }
         }
     }

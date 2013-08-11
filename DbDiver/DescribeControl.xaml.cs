@@ -140,5 +140,14 @@ namespace DbDiver {
                 Description.ScrollToVerticalOffset(Description.CaretPosition.GetCharacterRect(LogicalDirection.Forward).Top);
             }
         }
+
+
+        private void OnEnterKeyDown(object sender, KeyEventArgs args)
+        {
+            if (args.Key == System.Windows.Input.Key.Enter)
+            {
+                NavigationCommands.GoToPage.Execute(null, this);
+            }
+        }
     }
 }

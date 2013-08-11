@@ -121,5 +121,12 @@ namespace DbDiver {
             search.Focus();
         }
 
+        private void OnEditTableData(object sender, EditDataEventArgs args)
+        {
+            tabs.SelectedItem = dataTab;
+            editData.TableName = args.Table;
+            if(args.Size < 100)
+                ApplicationCommands.Open.Execute(args.Table, editData);
+        }
     }
 }

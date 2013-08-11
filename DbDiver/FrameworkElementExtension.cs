@@ -78,12 +78,16 @@ namespace DbDiver
 
         public static void Background(this FrameworkElement element, Delegate background, params object[] vals)
         {
+            element.Cursor = Cursors.AppStarting;
             ThreadPool.QueueUserWorkItem(
                 obj =>
                 {
                     try
                     {
                         background.DynamicInvoke(vals);
+                        element.Dispatcher.BeginInvoke(
+                            DispatcherPriority.Background,
+                            new Action(() => element.Cursor = Cursors.Arrow));
                     }
                     catch (Exception ex)
                     {
@@ -95,10 +99,10 @@ namespace DbDiver
                             new Action(
                                 () =>
                                 {
+                                    element.Cursor = Cursors.Arrow;
                                     MessageBox.Show(Application.Current.MainWindow, ex.Message, "DbDiver");
                                 }));
                     }
-
                 });
         }
     }

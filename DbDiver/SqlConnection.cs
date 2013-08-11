@@ -117,7 +117,7 @@ namespace DbDiver
             return results;
         }
 
-        protected override void GetPrimaryKeys(string table, Dictionary<int, Key> keys)
+        protected override void GetPrimaryKeys(string table, Dictionary<string, Key> keys)
         {
             using (var conn = Get())
             {
@@ -139,10 +139,10 @@ namespace DbDiver
                                 Column = reader.GetInt32(0),
                                 Name = reader.GetString(1),
                             };
-                            if (!keys.ContainsKey(key.Column))
-                                keys[key.Column] = key;
+                            if (!keys.ContainsKey(key.Name))
+                                keys[key.Name] = key;
                             else
-                                keys[key.Column].Type = KeyType.Primary;
+                                keys[key.Name].Type = KeyType.Primary;
                         }
 
                         reader.Close();
@@ -150,90 +150,5 @@ namespace DbDiver
                 }
             }
         }
-
-/*        protected virtual void GetForeignKeys(string table, Dictionary<int, Key> keys)
-        {
-            using (var conn = Get())
-            {
-                using (var command = conn.CreateCommand())
-                {
-
-                    command.CommandText =
-                        "select [parent_column].[ORDINAL_POSITION] as [parent_column_id], [referenced_constraint].[TABLE_NAME] as [name], [referenced_key].[COLUMN_NAME] as [key name] "
-                        + "from   [INFORMATION_SCHEMA].[TABLE_CONSTRAINTS] [parent_constraints] "
-
-                        + "inner join [INFORMATION_SCHEMA].[KEY_COLUMN_USAGE] [parent_key] "
-                        + "on [parent_constraints].[CONSTRAINT_SCHEMA] = [parent_key].[CONSTRAINT_SCHEMA] "
-                        + "and [parent_constraints].[CONSTRAINT_NAME] = [parent_key].[CONSTRAINT_NAME] "
-                        + "inner join [INFORMATION_SCHEMA].[REFERENTIAL_CONSTRAINTS] as [rc] "
-                        + "on [parent_constraints].[CONSTRAINT_SCHEMA] = [rc].[CONSTRAINT_SCHEMA] "
-                        + "and [parent_constraints].[CONSTRAINT_NAME] = [rc].[CONSTRAINT_NAME] "
-
-                        + "inner join [INFORMATION_SCHEMA].[TABLE_CONSTRAINTS] as [referenced_constraint] "
-                        + "on [rc].[UNIQUE_CONSTRAINT_SCHEMA] = [referenced_constraint].[CONSTRAINT_SCHEMA] "
-                        + "and [rc].[UNIQUE_CONSTRAINT_NAME] = [referenced_constraint].[CONSTRAINT_NAME] "
-                        + "inner join [INFORMATION_SCHEMA].[KEY_COLUMN_USAGE] as [referenced_key] "
-                        + "on [referenced_constraint].[CONSTRAINT_SCHEMA] = [referenced_key].[CONSTRAINT_SCHEMA] "
-                        + "and [referenced_constraint].[CONSTRAINT_NAME] = [referenced_key].[CONSTRAINT_NAME] "
-                        + "and [parent_key].[ORDINAL_POSITION] = [referenced_key].[ORDINAL_POSITION] "
-
-                        + "inner join [INFORMATION_SCHEMA].[COLUMNS] as [parent_column] "
-                        + "on [parent_constraints].[TABLE_NAME] = [parent_column].[TABLE_NAME] "
-                        + "and [parent_key].[COLUMN_NAME] = [parent_column].[COLUMN_NAME] "
-                        + "where [parent_constraints].[CONSTRAINT_TYPE] = 'FOREIGN KEY' "
-                        + "and [parent_constraints].[TABLE_NAME] = @tableName";
-
-                    command.AddWithValue("@tableName", table);
-
-                    using (var reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            Key key = new Key
-                            {
-                                Type = KeyType.Foreign,
-                                Column = reader.GetInt32(0),
-                                ForeignTable = reader.GetString(1),
-                                ForeignColumn = reader.GetString(2),
-                            };
-                            keys[key.Column] = key;
-                        }
-
-                        reader.Close();
-                    }
-                }
-            }
-        }*/
-
-        /*protected virtual void GetColumns(Table table)
-        {
-            using (var conn = Get())
-            {
-                using (var command = conn.CreateCommand())
-                {
-                    command.CommandText = "select [ORDINAL_POSITION], [COLUMN_NAME], [DATA_TYPE], [IS_NULLABLE] "
-                        + "from [INFORMATION_SCHEMA].[COLUMNS] where [TABLE_NAME] = @tableName";
-                    command.AddWithValue("@tableName", table.Name);
-
-                    using (var reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            table.Columns.Add(new Column
-                            {
-                                Table = table,
-                                Position = reader.GetInt32(0),
-                                Name = reader.GetString(1),
-                                Type = reader.GetString(2) +
-                                       (reader.GetString(3).Equals("YES") ? " (nullable)" : ""),
-                            });
-                        }
-
-                        reader.Close();
-                    }
-                }
-                conn.Close();
-            }
-        }*/
     }
 }

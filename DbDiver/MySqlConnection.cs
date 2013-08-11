@@ -104,7 +104,7 @@ namespace DbDiver
             return description;
         }
 
-        protected override void GetPrimaryKeys(string table, Dictionary<int, Key> keys)
+        protected override void GetPrimaryKeys(string table, Dictionary<string, Key> keys)
         {
             using (var conn = Get())
             {
@@ -140,16 +140,16 @@ namespace DbDiver
                             Column = position,
                             Name = index["column_name"].ToString(),
                         };
-                        if (!keys.ContainsKey(key.Column))
-                            keys[key.Column] = key;
+                        if (!keys.ContainsKey(key.Name))
+                            keys[key.Name] = key;
                         else
-                            keys[key.Column].Type = KeyType.Primary;
+                            keys[key.Name].Type = KeyType.Primary;
                     }
                 }
             }
         }
 
-        protected override void GetForeignKeys(string table, Dictionary<int, Key> keys)
+        protected override void GetForeignKeys(string table, Dictionary<string, Key> keys)
         {
             using (var conn = Get())
             {
@@ -176,7 +176,7 @@ namespace DbDiver
                                 ForeignTable = reader.GetString(1),
                                 ForeignColumn = reader.GetString(2),
                             };
-                            keys[key.Column] = key;
+                            keys[key.Name] = key;
                         }
 
                         reader.Close();

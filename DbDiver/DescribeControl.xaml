@@ -17,7 +17,7 @@
         <DockPanel DockPanel.Dock="Top">
             <Label Content="Function or Procedure: " DockPanel.Dock="Left" />
             <Button Content="Describe" Command="GoToPage" CommandParameter="{Binding Path=Text,ElementName=objectName}"  DockPanel.Dock="Right" />
-            <ComboBox IsEditable="true" Name="objectName" ItemsSource="{Binding ObjNames}" />
+            <ComboBox IsEditable="true" Name="objectName" ItemsSource="{Binding ObjNames}" KeyDown="OnEnterKeyDown" />
         </DockPanel>
 
         <RichTextBox Name="Description"

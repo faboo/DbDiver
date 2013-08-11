@@ -20,6 +20,7 @@ namespace DbDiver
 		public static readonly DependencyProperty SearchProperty = DependencyProperty.Register("Search", typeof(string), typeof(TablesControl));
         public static readonly RoutedEvent OnCrawlEvent = EventManager.RegisterRoutedEvent("OnCrawl", RoutingStrategy.Bubble, typeof(CrawlEventHandler), typeof(TablesControl));
         public static readonly RoutedEvent OnQueryEvent = EventManager.RegisterRoutedEvent("OnQuery", RoutingStrategy.Bubble, typeof(QueryEventHandler), typeof(TablesControl));
+        public static readonly RoutedEvent OnEditDataEvent = EventManager.RegisterRoutedEvent("OnEditData", RoutingStrategy.Bubble, typeof(EditDataEventHandler), typeof(TablesControl));
 
         bool tablesLoaded = false;
         private int currentFound = 0;
@@ -49,6 +50,11 @@ namespace DbDiver
 		{
 			add { AddHandler(OnQueryEvent, value); }
 			remove { RemoveHandler(OnQueryEvent, value); }
+		}
+        public event EditDataEventHandler OnEditData
+		{
+			add { AddHandler(OnEditDataEvent, value); }
+			remove { RemoveHandler(OnEditDataEvent, value); }
 		}
 
         public TablesControl()
@@ -97,7 +103,7 @@ namespace DbDiver
             }
         }
 
-        private void CanExecuteDescribe(object sender, CanExecuteRoutedEventArgs args)
+        private void CanExecuteOnRow(object sender, CanExecuteRoutedEventArgs args)
         {
             args.CanExecute = args.Parameter is DataRow || Data.SelectedItem != null;
             args.Handled = true;
@@ -161,10 +167,22 @@ namespace DbDiver
 
         private void ExecuteQueryTable(object sender, ExecutedRoutedEventArgs args)
         {
-			string table = ((DataRow)args.Parameter)["Table"] as string;
+			string table = ((DataRow)args.Parameter)["Table"].ToString();
             string query = String.Format("select * from [{0}]", table);
 
             RaiseEvent(new QueryEventArgs { Query = query, RoutedEvent = OnQueryEvent });
+        }
+
+        private void ExecuteEditData(object sender, ExecutedRoutedEventArgs args)
+        {
+            DataRow row = ((DataRow)args.Parameter);
+            string table = row["Table"].ToString();
+
+            RaiseEvent(new EditDataEventArgs { 
+                Table = table,
+                Size = int.Parse(row["Rows"].ToString()),
+                RoutedEvent = OnEditDataEvent
+            });
         }
     }
 }

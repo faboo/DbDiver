@@ -9,8 +9,9 @@
              d:DesignHeight="300" d:DesignWidth="300">
   <UserControl.CommandBindings>
     <CommandBinding Command="src:Commands.FindNext" Executed="ExecuteFind" />
-		<CommandBinding Command="GoToPage" Executed="ExecuteQueryTable" />
-		<CommandBinding Command="src:Commands.Describe" Executed="ExecuteDescribe" CanExecute="CanExecuteDescribe" />
+		<CommandBinding Command="GoToPage" Executed="ExecuteQueryTable" CanExecute="CanExecuteOnRow" />
+		<CommandBinding Command="src:Commands.Describe" Executed="ExecuteDescribe" CanExecute="CanExecuteOnRow" />
+		<CommandBinding Command="Open" Executed="ExecuteEditData" CanExecute="CanExecuteOnRow" />
 	</UserControl.CommandBindings>
   <DataGrid Name="Data" ItemsSource="{Binding Path=Tables,ElementName=control}"
             IsReadOnly="true"
@@ -26,6 +27,8 @@
 							<MenuItem Header="Query Table" Command="GoToPage"
 												CommandParameter="{Binding Row}" />
 							<MenuItem Header="Crawl Table" Command="src:Commands.Describe"
+									CommandParameter="{Binding Row}" />
+							<MenuItem Header="Edit Table Data" Command="Open"
 									CommandParameter="{Binding Row}" />
 						</ContextMenu>
 					</Setter.Value>
