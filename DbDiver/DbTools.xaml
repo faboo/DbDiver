@@ -47,7 +47,7 @@
 				<src:ProceduresControl x:Name="modules"  Connection="{Binding Connection}" OnLookup="OnLookup" OnQuery="OnQuery" />
       </TabItem>
 			<TabItem Header="Data" Name="dataTab">
-				<src:EditData x:Name="editData" Connection="{Binding Connection}" />
+				<src:EditDataControl x:Name="editData" Connection="{Binding Connection}" />
 			</TabItem>
 		</TabControl>
   </DockPanel>

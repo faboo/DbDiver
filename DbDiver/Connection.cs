@@ -6,6 +6,7 @@ using System.Data.SqlServerCe;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Transactions;
 
 namespace DbDiver
 {
@@ -136,7 +137,7 @@ namespace DbDiver
             {
                 using (var command = conn.CreateCommand())
                 {
-                    command.CommandText = "select [ordinal_position], [column_name] from [INFORMATION_SCHEMA].[INDEXES] "
+                    command.CommandText = "select [column_name] from [INFORMATION_SCHEMA].[INDEXES] "
                         + "where [PRIMARY_KEY] = 1 and [TABLE_NAME] = @tableName "
                         + "and " + DB_CHECK;
                     command.AddWithValue("@tableName", table);
@@ -149,13 +150,12 @@ namespace DbDiver
                             Key key = new Key
                             {
                                 Type = KeyType.Primary,
-                                Column = reader.GetInt32(0),
-                                Name = reader.GetString(1),
+                                Column = reader.GetString(0),
                             };
-                            if (!keys.ContainsKey(key.Name))
-                                keys[key.Name] = key;
+                            if (!keys.ContainsKey(key.Column))
+                                keys[key.Column] = key;
                             else
-                                keys[key.Name].Type = KeyType.Primary;
+                                keys[key.Column].Type = KeyType.Primary;
                         }
 
                         reader.Close();
@@ -164,37 +164,48 @@ namespace DbDiver
             }
         }
 
-        protected virtual void GetForeignKeys(string table, Dictionary<string, Key> keys)
+        private void GetForeignKeys(string table, Dictionary<string, Key> keys, bool outward = true)
         {
+            foreach(var key in GetForeignKeys(table, outward))
+                keys[key.Column] = key;
+        }
+
+        public virtual IEnumerable<Key> GetForeignKeys(string table, bool outward)
+        {
+            List<Key> keys = new List<Key>();
             using (var conn = Get())
             {
                 using (var command = conn.CreateCommand())
                 {
                     command.CommandText = 
-                        "select [parent_column].[ORDINAL_POSITION] as [parent_column_id], [parent_column].[COLUMN_NAME] as [parent_column_name], [referenced_constraint].[TABLE_NAME] as [name], [referenced_key].[COLUMN_NAME] as [key name] "
-                        + "from   [INFORMATION_SCHEMA].[TABLE_CONSTRAINTS] as [parent_constraints] "
+                        "select "
+                        + (outward
+                            ? "[parent_key].[COLUMN_NAME] as [parent_column], [referenced_constraint].[TABLE_NAME] as [referenced_table], [referenced_key].[COLUMN_NAME] as [referenced_column] "
+                            : "[referenced_key].[COLUMN_NAME] as [parent_column], [parent_constraint].[TABLE_NAME] as [referenced_table], [parent_key].[COLUMN_NAME] as [referenced_column] ")
+                        + "from   [INFORMATION_SCHEMA].[TABLE_CONSTRAINTS] as [parent_constraint] "
 
-                        + "inner join [INFORMATION_SCHEMA].[KEY_COLUMN_USAGE] [parent_key] "
-                        + "on [parent_constraints].[CONSTRAINT_SCHEMA] = [parent_key].[CONSTRAINT_SCHEMA] "
-                        + "and [parent_constraints].[CONSTRAINT_NAME] = [parent_key].[CONSTRAINT_NAME] "
+                        + "inner join [INFORMATION_SCHEMA].[KEY_COLUMN_USAGE] as [parent_key] "
+                        + "on [parent_constraint].[CONSTRAINT_SCHEMA] = [parent_key].[CONSTRAINT_SCHEMA] "
+                        + "and [parent_constraint].[CONSTRAINT_NAME] = [parent_key].[CONSTRAINT_NAME] "
+                        
                         + "inner join [INFORMATION_SCHEMA].[REFERENTIAL_CONSTRAINTS] as [rc] "
-                        + "on [parent_constraints].[CONSTRAINT_SCHEMA] = [rc].[CONSTRAINT_SCHEMA] "
-                        + "and [parent_constraints].[CONSTRAINT_NAME] = [rc].[CONSTRAINT_NAME] "
+                        + "on [parent_constraint].[CONSTRAINT_SCHEMA] = [rc].[CONSTRAINT_SCHEMA] "
+                        + "and [parent_constraint].[CONSTRAINT_NAME] = [rc].[CONSTRAINT_NAME] "
 
                         + "inner join [INFORMATION_SCHEMA].[TABLE_CONSTRAINTS] as [referenced_constraint] "
                         + "on [rc].[UNIQUE_CONSTRAINT_SCHEMA] = [referenced_constraint].[CONSTRAINT_SCHEMA] "
                         + "and [rc].[UNIQUE_CONSTRAINT_NAME] = [referenced_constraint].[CONSTRAINT_NAME] "
+
                         + "inner join [INFORMATION_SCHEMA].[KEY_COLUMN_USAGE] as [referenced_key] "
                         + "on [referenced_constraint].[CONSTRAINT_SCHEMA] = [referenced_key].[CONSTRAINT_SCHEMA] "
                         + "and [referenced_constraint].[CONSTRAINT_NAME] = [referenced_key].[CONSTRAINT_NAME] "
                         + "and [parent_key].[ORDINAL_POSITION] = [referenced_key].[ORDINAL_POSITION] "
 
-                        + "inner join [INFORMATION_SCHEMA].[COLUMNS] as [parent_column] "
-                        + "on [parent_constraints].[TABLE_NAME] = [parent_column].[TABLE_NAME] "
-                        + "and [parent_key].[COLUMN_NAME] = [parent_column].[COLUMN_NAME] "
-                        + "where [parent_constraints].[CONSTRAINT_TYPE] = 'FOREIGN KEY' "
-                        + "and [parent_constraints].[TABLE_NAME] = @tableName "
-                        + "and (([parent_constraints].[TABLE_CATALOG] is null and [parent_constraints].[TABLE_SCHEMA] is null) or ([parent_constraints].[TABLE_CATALOG] is null and [parent_constraints].[TABLE_SCHEMA] = @database) or [parent_constraints].[TABLE_CATALOG] = @database) ";
+                        + "where [parent_constraint].[CONSTRAINT_TYPE] = 'FOREIGN KEY' "
+                        + "and (([parent_constraint].[TABLE_CATALOG] is null and [parent_constraint].[TABLE_SCHEMA] is null) or ([parent_constraint].[TABLE_CATALOG] is null and [parent_constraint].[TABLE_SCHEMA] = @database) or [parent_constraint].[TABLE_CATALOG] = @database) "
+                        + (outward
+                            ? "and [parent_constraint].[TABLE_NAME] = @tableName "
+                            : "and [referenced_constraint].[TABLE_NAME] = @tableName ");
 
                     command.AddWithValue("@tableName", table);
                     command.AddWithValue("@database", conn.Database);
@@ -206,18 +217,19 @@ namespace DbDiver
                             Key key = new Key
                             {
                                 Type = KeyType.Foreign,
-                                Column = reader.GetInt32(0),
-                                Name = reader.GetString(1),
-                                ForeignTable = reader.GetString(2),
-                                ForeignColumn = reader.GetString(3),
+                                Column = reader.GetString(0),
+                                ForeignTable = reader.GetString(1),
+                                ForeignColumn = reader.GetString(2),
                             };
-                            keys[key.Name] = key;
+                            keys.Add(key);
                         }
 
                         reader.Close();
                     }
                 }
             }
+
+            return keys;
         }
 
         protected virtual void GetColumns(Table table)
@@ -349,9 +361,49 @@ namespace DbDiver
             }
         }
 
-        public virtual void DeleteRow(DataRow row, Table table)
+        protected virtual void TraceDependents(DbConnection conn, DataRow row, string table, Stack<Tuple<Table, DataRow>> rows)
         {
+            var fks = GetForeignKeys(table, false);
+
+            foreach (var fk in fks)
+                using (var command = conn.CreateCommand())
+                using (var adapter = CreateDataAdapter())
+                {
+                    DataSet results = new DataSet();
+                    DataRow foreignRow;
+
+                    command.Parameters.Clear();
+                    command.CommandText = String.Format(
+                        "select * from {0} where {1} = @key",
+                        fk.ForeignTable,
+                        fk.ForeignColumn);
+                    command.AddWithValue("@key", row[fk.Column, DataRowVersion.Original]);
+
+                    adapter.SelectCommand = command;
+                    adapter.Fill(results);
+
+                    if (results.Tables[0].Rows.Count > 0)
+                    {
+                        foreignRow = results.Tables[0].Rows[0];
+
+                        rows.Push(new Tuple<Table, DataRow>(GetTable(fk.ForeignTable), foreignRow));
+                        TraceDependents(conn, foreignRow, fk.ForeignTable, rows);
+                    }
+                }
+        }
+
+        private Stack<Tuple<Table, DataRow>> TraceDependents(DataRow row, Table table)
+        {
+            var rows = new Stack<Tuple<Table, DataRow>>();
+
             using (var conn = Get())
+                TraceDependents(conn, row, table.Name, rows);
+
+            return rows;
+        }
+
+        protected virtual void DeleteRow(DbConnection conn, DataRow row, Table table)
+        {
             using (var command = conn.CreateCommand())
             {
                 StringBuilder delete = new StringBuilder();
@@ -361,6 +413,28 @@ namespace DbDiver
 
                 command.CommandText = delete.ToString();
                 command.ExecuteNonQuery();
+            }
+        }
+
+        public void DeleteRow(DataRow row, Table table, bool follow)
+        {
+            Stack<Tuple<Table, DataRow>> rows = null;
+
+            if(follow)
+                rows = TraceDependents(row, table);
+
+            using (var transaction = new TransactionScope())
+            using (var conn = Get())
+            {
+                while (rows != null && rows.Count > 0)
+                {
+                    var delete = rows.Pop();
+                    DeleteRow(conn, delete.Item2, delete.Item1);
+                }
+
+                DeleteRow(conn, row, table);
+
+                transaction.Complete();
             }
         }
 
@@ -392,6 +466,11 @@ namespace DbDiver
                 command.ExecuteNonQuery();
             }
         }
+
+        public bool HasDependents(Table table)
+        {
+            return GetForeignKeys(table.Name, false).Count() > 0;
+        }
     }
 
     public enum KeyType
@@ -406,8 +485,7 @@ namespace DbDiver
     public class Key
     {
         public KeyType Type { get; set; }
-        public int Column { get; set; }
-        public string Name { get; set; }
+        public string Column { get; set; }
         public string ForeignTable { get; set; }
         public string ForeignColumn { get; set; }
     }

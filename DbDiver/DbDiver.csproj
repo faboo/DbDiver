@@ -46,6 +46,7 @@
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.SqlServerCe, Version=3.5.1.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL" />
+    <Reference Include="System.Transactions" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
@@ -69,11 +70,14 @@
     <Compile Include="Commands.cs" />
     <Compile Include="Connection.cs" />
     <Compile Include="CrawlEventArgs.cs" />
+    <Compile Include="DataCrawl.xaml.cs">
+      <DependentUpon>DataCrawl.xaml</DependentUpon>
+    </Compile>
     <Compile Include="DbInstance.cs" />
     <Compile Include="DbParametersCollectionExtension.cs" />
     <Compile Include="DbProvider.cs" />
-    <Compile Include="EditData.xaml.cs">
-      <DependentUpon>EditData.xaml</DependentUpon>
+    <Compile Include="EditDataControl.xaml.cs">
+      <DependentUpon>EditDataControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="EditDataEventArgs.cs" />
     <Compile Include="FrameworkElementExtension.cs" />
@@ -101,9 +105,14 @@
     <Compile Include="TableCrawlControl.xaml.cs">
       <DependentUpon>TableCrawlControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="TableData.cs" />
     <Compile Include="TablesControl.xaml.cs">
       <DependentUpon>TablesControl.xaml</DependentUpon>
     </Compile>
+    <Page Include="DataCrawl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="DbTools.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -112,7 +121,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="EditData.xaml">
+    <Page Include="EditDataControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

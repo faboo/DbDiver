@@ -81,7 +81,7 @@ namespace DbDiver
                     command.CommandText =
                         "SELECT Definition " +
                         "FROM sys.sql_modules m JOIN sys.objects o ON m.object_id = o.object_id " +
-                        //"AND TYPE IN ('FN', 'IF', 'TF', 'P') " +
+                        "AND TYPE IN ('FN', 'IF', 'TF', 'P') " +
                         "WHERE Name = @objname;";
                     command.AddWithValue("@objname", name.Trim());
                     description = command.ExecuteScalar() as string;
@@ -136,13 +136,12 @@ namespace DbDiver
                             Key key = new Key
                             {
                                 Type = KeyType.Primary,
-                                Column = reader.GetInt32(0),
-                                Name = reader.GetString(1),
+                                Column = reader.GetString(1),
                             };
-                            if (!keys.ContainsKey(key.Name))
-                                keys[key.Name] = key;
+                            if (!keys.ContainsKey(key.Column))
+                                keys[key.Column] = key;
                             else
-                                keys[key.Name].Type = KeyType.Primary;
+                                keys[key.Column].Type = KeyType.Primary;
                         }
 
                         reader.Close();

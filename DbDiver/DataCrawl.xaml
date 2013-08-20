@@ -1,0 +1,95 @@
+﻿<Window x:Class="DbDiver.DataCrawl"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+				xmlns:src="clr-namespace:DbDiver"
+				Name="Window"
+        Title="DbDiver - Data Crawl" Height="480" Width="640">
+	<Window.CommandBindings>
+		<CommandBinding Command="BrowseForward" Executed="ExecuteOpenTable" />
+	</Window.CommandBindings>
+	<Window.Resources>
+		<DataTemplate x:Key="rowTemplate" DataType="src:RowData">
+			<DataGrid ItemsSource="{Binding Data}"
+													AutoGenerateColumns="false"
+													VerticalContentAlignment="Center"
+													VerticalGridLinesBrush="{x:Null}"
+													HorizontalGridLinesBrush="Aquamarine"
+													Margin="0,3,0,0">
+				<DataGrid.Columns>
+					<DataGridTemplateColumn Header="Key" Width="40" SortMemberPath="Key">
+						<DataGridTemplateColumn.CellTemplate>
+							<DataTemplate>
+								<Image Height="16" Width="16" Margin="8">
+									<Image.Style>
+										<Style TargetType="Image">
+											<Style.Triggers>
+												<DataTrigger Binding="{Binding Key}" Value="{x:Static src:KeyType.Primary}">
+													<Setter Property="Source" Value="1367512141_42264_yellow.ico" />
+												</DataTrigger>
+												<DataTrigger Binding="{Binding Key}" Value="{x:Static src:KeyType.Foreign}">
+													<Setter Property="Source" Value="1367512141_42264.ico" />
+												</DataTrigger>
+											</Style.Triggers>
+										</Style>
+									</Image.Style>
+								</Image>
+							</DataTemplate>
+						</DataGridTemplateColumn.CellTemplate>
+					</DataGridTemplateColumn>
+					<DataGridTextColumn Header="Column" Width="150" Binding="{Binding Name}" IsReadOnly="True" />
+					<DataGridTextColumn Header="Value" Width="150" Binding="{Binding Data}" IsReadOnly="True" />
+					<DataGridTextColumn Header="Type" Width="50" Binding="{Binding Type}" IsReadOnly="True" />
+					<DataGridTemplateColumn>
+						<DataGridTemplateColumn.CellTemplate>
+							<DataTemplate>
+								<Button Content="{Binding ForeignTable}"
+																						Command="BrowseForward"
+																						CommandParameter="{Binding}"
+																						HorizontalContentAlignment="Stretch">
+									<Button.ContentTemplate>
+										<DataTemplate>
+											<DockPanel HorizontalAlignment="Stretch">
+												<TextBlock Text="→ " DockPanel.Dock="Left" />
+												<TextBlock Text="{Binding}" DockPanel.Dock="Right" />
+											</DockPanel>
+										</DataTemplate>
+									</Button.ContentTemplate>
+									<Button.Style>
+										<Style TargetType="Button">
+											<Style.Triggers>
+												<DataTrigger Binding="{Binding ForeignTable}" Value="{x:Null}">
+													<Setter Property="Visibility" Value="Collapsed" />
+												</DataTrigger>
+											</Style.Triggers>
+										</Style>
+									</Button.Style>
+								</Button>
+							</DataTemplate>
+						</DataGridTemplateColumn.CellTemplate>
+					</DataGridTemplateColumn>
+				</DataGrid.Columns>
+			</DataGrid>
+		</DataTemplate>
+
+		<DataTemplate x:Key="{x:Type src:TableData}" DataType="src:TableData">
+			<DockPanel Margin="7,5,7,5">
+				<TextBlock Text="{Binding Name}" DockPanel.Dock="Top" />
+				<TabControl ItemsSource="{Binding Data}" ItemTemplate="{StaticResource rowTemplate}"  TabStripPlacement="Right" />
+			</DockPanel>
+		</DataTemplate>
+	</Window.Resources>
+
+	<DockPanel DataContext="{Binding ElementName=Window}">
+		<ItemsControl ItemsSource="{Binding OpenData}" ItemTemplate="{StaticResource {x:Type src:TableData}}">
+			<ItemsControl.Template>
+				<ControlTemplate>
+					<Border BorderBrush="LightGray" BorderThickness="1">
+						<ScrollViewer VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Visible">
+							<StackPanel Orientation="Horizontal" IsItemsHost="True" />
+						</ScrollViewer>
+					</Border>
+				</ControlTemplate>
+			</ItemsControl.Template>
+		</ItemsControl>
+	</DockPanel>
+</Window>

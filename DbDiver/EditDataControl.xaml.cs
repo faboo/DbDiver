@@ -13,14 +13,14 @@ namespace DbDiver
     /// <summary>
     /// Interaction logic for EditData.xaml
     /// </summary>
-    public partial class EditData : UserControl
+    public partial class EditDataControl : UserControl
     {
-		public static readonly DependencyProperty TableNameProperty = DependencyProperty.Register("TableName", typeof(string), typeof(EditData));
-        public static readonly DependencyProperty TablesProperty = DependencyProperty.Register("Tables", typeof(ObservableCollection<string>), typeof(EditData));
-        public static readonly DependencyProperty ConnectionProperty = DependencyProperty.Register("Connection", typeof(Connection), typeof(EditData));
-		public static readonly DependencyProperty RowsProperty = DependencyProperty.Register("Rows", typeof(DataTable), typeof(EditData));
+		public static readonly DependencyProperty TableNameProperty = DependencyProperty.Register("TableName", typeof(string), typeof(EditDataControl));
+        public static readonly DependencyProperty TablesProperty = DependencyProperty.Register("Tables", typeof(ObservableCollection<string>), typeof(EditDataControl));
+        public static readonly DependencyProperty ConnectionProperty = DependencyProperty.Register("Connection", typeof(Connection), typeof(EditDataControl));
+		public static readonly DependencyProperty RowsProperty = DependencyProperty.Register("Rows", typeof(DataTable), typeof(EditDataControl));
 
-        public EditData()
+        public EditDataControl()
         {
             Tables = new ObservableCollection<string>();
             InitializeComponent();
@@ -48,6 +48,18 @@ namespace DbDiver
 		}
 
         private Table table;
+
+        private void ExecuteCrawl(object sender, ExecutedRoutedEventArgs args)
+        {
+            DataRow row = ((DataRowView)RowGrid.SelectedItem).Row;
+            TableData data = new TableData(table);
+            DataCrawl crawl = new DataCrawl();
+
+            data.AddData(row);
+            crawl.Connection = Connection;
+            crawl.OpenData.Add(data);
+            crawl.Show();
+        }
 
         private void ExecuteOpenTable(object sender, ExecutedRoutedEventArgs args)
         {
@@ -86,11 +98,36 @@ namespace DbDiver
 
         void OnRowDeleted(object sender, DataRowChangeEventArgs args)
         {
-            this.Background(
-                new Action<Connection, DataRow>((conn, row) =>
-                    conn.DeleteRow(row, table)),
+            Cursor = Cursors.AppStarting;
+            this.WeaveWithError<bool>(
+                new Func<Connection, DataRow, bool>(
+                    (conn, row) =>
+                        {
+                            conn.DeleteRow(
+                                row,
+                                table,
+                                !conn.HasDependents(table) || FollowDependents());
+                            return false;
+                        }),
+                null,
+                () => Cursor = Cursors.Arrow,
+                ex => {
+                    args.Row.CancelEdit();
+                    MessageBox.Show(Application.Current.MainWindow, ex.Message, "DbDiver");
+                },
                 Connection,
                 args.Row);
+        }
+
+        bool FollowDependents()
+        {
+            return (bool)Dispatcher.Invoke(new Func<bool>(() =>
+                MessageBox.Show(
+                    "This row has dependent rows. Should we delete those (and their dependents) first?",
+                    "DbDiver",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question) == MessageBoxResult.Yes),
+                DispatcherPriority.Background);
         }
 
         void OnRowChanged(object sender, DataRowChangeEventArgs args)

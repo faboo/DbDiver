@@ -38,6 +38,18 @@ namespace DbDiver
 
         public static void Weave<R>(this FrameworkElement element, Delegate background, Action<R> foreground, Action after, params object[] vals)
         {
+            WeaveWithError<R>(element, background, foreground, after, null, vals);
+        }
+
+
+        public static void WeaveWithError<R>(
+            this FrameworkElement element,
+            Delegate background,
+            Action<R> foreground,
+            Action after,
+            Action<Exception> error,
+            params object[] vals)
+        {
             ThreadPool.QueueUserWorkItem(
                 obj =>
                 {
@@ -49,7 +61,8 @@ namespace DbDiver
                             new Action(
                                 () =>
                                 {
-                                    foreground(result);
+                                    if(foreground != null)
+                                        foreground(result);
                                     after();
                                 }));
                     }
@@ -64,7 +77,10 @@ namespace DbDiver
                                 () =>
                                 {
                                     after();
-                                    MessageBox.Show(Application.Current.MainWindow, ex.Message, "DbDiver");
+                                    if (error != null)
+                                        error(ex);
+                                    else
+                                        MessageBox.Show(Application.Current.MainWindow, ex.Message, "DbDiver");
                                 }));
                     }
 

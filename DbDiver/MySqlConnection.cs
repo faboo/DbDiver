@@ -121,46 +121,40 @@ namespace DbDiver
 
                     foreach(DataRow index in indexes.Rows)
                     {
-                        int position;
                         Key key;
-
-                        command.CommandText =
-                            "select [ORDINAL_POSITION] from [INFORMATION_SCHEMA].[COLUMNS] "
-                            + "where [COLUMNS].[COLUMN_NAME] = @columnName "
-                            + "and [COLUMNS].[TABLE_NAME] = @tableName "
-                            + "and [COLUMNS].[TABLE_SCHEMA] = @database ";
-                        command.AddWithValue("@columnName", index["column_name"]);
-                        command.AddWithValue("@tableName", table);
-                        command.AddWithValue("@database", conn.Database);
-                        position = command.ExecuteScalar().ToInt();
 
                         key = new Key
                         {
                             Type = KeyType.Primary,
-                            Column = position,
-                            Name = index["column_name"].ToString(),
+                            Column = index["column_name"].ToString(),
                         };
-                        if (!keys.ContainsKey(key.Name))
-                            keys[key.Name] = key;
+                        if (!keys.ContainsKey(key.Column))
+                            keys[key.Column] = key;
                         else
-                            keys[key.Name].Type = KeyType.Primary;
+                            keys[key.Column].Type = KeyType.Primary;
                     }
                 }
             }
         }
 
-        protected override void GetForeignKeys(string table, Dictionary<string, Key> keys)
+        public override IEnumerable<Key> GetForeignKeys(string table, bool outward)
         {
+            List<Key> keys = new List<Key>();
+
             using (var conn = Get())
             {
                 using (var command = conn.CreateCommand())
                 {
                     command.CommandText =
-                        "select [ORDINAL_POSITION] as [parent_column_id], [REFERENCED_TABLE_NAME] as [name], "
-                        + "[REFERENCED_COLUMN_NAME] as [key name] "
+                        "select "
+                        + (outward
+                            ? "[COLUMN_NAME] as [parent_column], [REFERENCED_TABLE_NAME] as [referenced_table], [REFERENCED_COLUMN_NAME] as [referenced_column] "
+                            : "[REFERENCED_COLUMN_NAME] as [parent_column], [TABLE_NAME] as [referenced_table], [COLUMN_NAME] as [referenced_column] ")
                         + "from "
                         + "[INFORMATION_SCHEMA].[KEY_COLUMN_USAGE] where "
-                        + "[REFERENCED_TABLE_NAME] is not null and [TABLE_NAME] = @tableName "
+                        + (outward
+                            ? "[REFERENCED_TABLE_NAME] is not null and [TABLE_NAME] = @tableName "
+                            : "[TABLE_NAME] is not null and [REFERENCED_TABLE_NAME] = @tableName ")
                         + "and [TABLE_SCHEMA] = @database";
                     command.AddWithValue("@tableName", table);
                     command.AddWithValue("@database", conn.Database);
@@ -172,17 +166,19 @@ namespace DbDiver
                             Key key = new Key
                             {
                                 Type = KeyType.Foreign,
-                                Column = (int)reader.GetInt64(0),
+                                Column = reader.GetString(0),
                                 ForeignTable = reader.GetString(1),
                                 ForeignColumn = reader.GetString(2),
                             };
-                            keys[key.Name] = key;
+                            keys.Add(key);
                         }
 
                         reader.Close();
                     }
                 }
             }
+
+            return keys;
         }
     }
 }
