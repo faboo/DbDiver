@@ -88,11 +88,12 @@ namespace DbDiver
 
         private void AddRows(DataTable rows)
         {
+            string tableName = TableName;
             Rows = rows;
             Rows.RowChanged += OnRowChanged;
             Rows.RowDeleted += OnRowDeleted;
-            Tables.Remove(TableName);
-            Tables.Insert(0, TableName);
+            Tables.Remove(tableName);
+            Tables.Insert(0, tableName);
             Cursor = Cursors.Arrow;
         }
 
