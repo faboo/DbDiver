@@ -361,9 +361,9 @@ namespace DbDiver
             }
         }
 
-        protected virtual void TraceDependents(DbConnection conn, DataRow row, string table, Stack<Tuple<Table, DataRow>> rows)
+        protected virtual void TraceDependents(DbConnection conn, DataRow row, Table table, List<Tuple<Table, DataRow>> rows)
         {
-            var fks = GetForeignKeys(table, false);
+            var fks = GetForeignKeys(table.Name, false);
 
             foreach (var fk in fks)
                 using (var command = conn.CreateCommand())
@@ -384,22 +384,48 @@ namespace DbDiver
 
                     if (results.Tables[0].Rows.Count > 0)
                     {
+                        var foreignTable = GetTable(fk.ForeignTable);
                         foreignRow = results.Tables[0].Rows[0];
 
-                        rows.Push(new Tuple<Table, DataRow>(GetTable(fk.ForeignTable), foreignRow));
-                        TraceDependents(conn, foreignRow, fk.ForeignTable, rows);
+                        table.DependentKeys.Add(fk);
+
+                        rows.Add(new Tuple<Table, DataRow>(foreignTable, foreignRow));
+                        TraceDependents(conn, foreignRow, foreignTable, rows);
                     }
                 }
         }
 
-        private Stack<Tuple<Table, DataRow>> TraceDependents(DataRow row, Table table)
+        private Queue<Tuple<Table, DataRow>> TraceDependents(DataRow row, Table table)
         {
-            var rows = new Stack<Tuple<Table, DataRow>>();
+            var rows = new List<Tuple<Table, DataRow>>();
+            var sortedTables = new List<Table>();
+            var sortedRows = new Queue<Tuple<Table, DataRow>>();
 
             using (var conn = Get())
-                TraceDependents(conn, row, table.Name, rows);
+                TraceDependents(conn, row, table, rows);
 
-            return rows;
+            while (rows.Count > 0)
+            {
+                var elligible = 
+                    // All the rows...
+                    rows.FindAll(r =>
+                        // whose dependent tables...
+                        r.Item1.DependentKeys.All(fk =>
+                            // are all ready sorted out.
+                            sortedTables.Any(t =>
+                                t.Name.Equals(fk.ForeignTable))));
+                var tables = elligible.Select(e => e.Item1).Distinct();
+
+                sortedTables.AddRange(tables);
+
+                foreach (var elligibleRow in elligible)
+                {
+                    rows.Remove(elligibleRow);
+                    sortedRows.Enqueue(elligibleRow);
+                }
+            }
+
+            return sortedRows;
         }
 
         protected virtual void DeleteRow(DbConnection conn, DataRow row, Table table)
@@ -418,23 +444,25 @@ namespace DbDiver
 
         public void DeleteRow(DataRow row, Table table, bool follow)
         {
-            Stack<Tuple<Table, DataRow>> rows = null;
+            Queue<Tuple<Table, DataRow>> rows = null;
 
             if(follow)
                 rows = TraceDependents(row, table);
 
-            using (var transaction = new TransactionScope())
+			//Although it would be nice to do these deletes in a transaction, it appears that deleted rows aren't necessarily fully deleted, so FK
+			//rules keep rows higher up the FK chain from being successfullydeleted.
+            //using (var transaction = new TransactionScope())
             using (var conn = Get())
             {
                 while (rows != null && rows.Count > 0)
                 {
-                    var delete = rows.Pop();
+                    var delete = rows.Dequeue();
                     DeleteRow(conn, delete.Item2, delete.Item1);
                 }
 
                 DeleteRow(conn, row, table);
 
-                transaction.Complete();
+              //  transaction.Complete();
             }
         }
 
@@ -495,11 +523,28 @@ namespace DbDiver
         public string Name { get; set; }
         public IList<Column> Columns { get; set; }
         public IList<Column> Primary { get; set; }
+        public IList<Key> DependentKeys { get; set; }
 
         public Table()
         {
             Columns = new List<Column>();
             Primary = new List<Column>();
+            DependentKeys = new List<Key>();
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is Table && (obj as Table).Name.Equals(Name);
+        }
+
+        public override int GetHashCode()
+        {
+            return Name.GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            return Name;
         }
     }
 
