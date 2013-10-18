@@ -94,6 +94,7 @@ namespace DbDiver
             Rows.RowDeleted += OnRowDeleted;
             Tables.Remove(tableName);
             Tables.Insert(0, tableName);
+            TableName = tableName;
             Cursor = Cursors.Arrow;
         }
 
@@ -154,7 +155,7 @@ namespace DbDiver
 
         private void OnEnterKeyDown(object sender, KeyEventArgs args)
         {
-            if (args.Key == System.Windows.Input.Key.Enter)
+            if (args.Key == System.Windows.Input.Key.Enter || args.Key == System.Windows.Input.Key.Return)
             {
                 ApplicationCommands.Open.Execute(null, this);
             }

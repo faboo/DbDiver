@@ -286,6 +286,9 @@ namespace DbDiver
                     table.Primary.Add(column);
             }
 
+            foreach (var fk in GetForeignKeys(table.Name, false))
+                table.AddDependentKey(fk);
+
             return table;
         }
 
@@ -363,9 +366,9 @@ namespace DbDiver
 
         protected virtual void TraceDependents(DbConnection conn, DataRow row, Table table, List<Tuple<Table, DataRow>> rows)
         {
-            var fks = GetForeignKeys(table.Name, false);
+            //var fks = GetForeignKeys(table.Name, false);
 
-            foreach (var fk in fks)
+            foreach (var fk in table.DependentKeys)
                 using (var command = conn.CreateCommand())
                 using (var adapter = CreateDataAdapter())
                 {
@@ -532,6 +535,16 @@ namespace DbDiver
             DependentKeys = new List<Key>();
         }
 
+        public void AddDependentKey(Key key)
+        {
+            Column column = Columns.First(c => c.Name.Equals(key.Column));
+
+            DependentKeys.Add(key);
+            if (column.Dependents == null)
+                column.Dependents = new List<Key>();
+            column.Dependents.Add(key);
+        }
+
         public override bool Equals(object obj)
         {
             return obj is Table && (obj as Table).Name.Equals(Name);
@@ -553,6 +566,7 @@ namespace DbDiver
         public int Position { get; set; }
         public Table Table { get; set; }
         public KeyType Key { get; set; }
+        public List<Key> Dependents { get; set; }
         public string Name { get; set; }
         public string Type { get; set; }
         public string ForeignTable { get; set; }

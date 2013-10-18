@@ -144,7 +144,7 @@ namespace DbDiver {
 
         private void OnEnterKeyDown(object sender, KeyEventArgs args)
         {
-            if (args.Key == System.Windows.Input.Key.Enter)
+            if (args.Key == System.Windows.Input.Key.Enter || args.Key == System.Windows.Input.Key.Return)
             {
                 NavigationCommands.GoToPage.Execute(null, this);
             }

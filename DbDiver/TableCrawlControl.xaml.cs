@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Data.SqlClient;
+using System.Data;
 using System.Text;
 using System.Threading;
 using System.Windows;
@@ -169,10 +169,41 @@ namespace DbDiver {
 
         private void OnEnterKeyDown(object sender, KeyEventArgs args)
         {
-            if (args.Key == System.Windows.Input.Key.Enter)
+            if (args.Key == System.Windows.Input.Key.Enter || args.Key == System.Windows.Input.Key.Return)
             {
-                ApplicationCommands.Open.Execute(null, this);
+                NavigationCommands.BrowseForward.Execute(null, this);
             }
+        }
+
+        private void UnshiftTable(Table parent, Table child)
+        {
+            int at = OpenTables.IndexOf(parent);
+
+            while (at > 0)
+            {
+                OpenTables.RemoveAt(0);
+                at -= 1;
+            }
+
+            OpenTables.Insert(0, child);
+        }
+
+        private void OnDependentKeySelected(object sender, SelectionChangedEventArgs args)
+        {
+            Column column = (sender as ComboBox).DataContext as Column;
+            Key dependentKey = args.AddedItems[0] as Key;
+
+            this.Weave<Table>(
+                new Func<Connection, Key, Table>(loadTable),
+                child => UnshiftTable(column.Table, child),
+                () => Cursor = Cursors.Arrow,
+                Connection,
+                dependentKey);
+        }
+
+        private Table loadTable(Connection connection, Key dependentKey)
+        {
+            return connection.GetTable(dependentKey.ForeignTable);
         }
     }
 }

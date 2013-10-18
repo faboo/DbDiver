@@ -43,6 +43,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Libraries\mysql.data.dll</HintPath>
     </Reference>
+    <Reference Include="PresentationFramework.Aero" />
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.SqlServerCe, Version=3.5.1.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL" />
@@ -92,6 +93,7 @@
     <Compile Include="ProceduresControl.xaml.cs">
       <DependentUpon>ProceduresControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ProxyComboBox.cs" />
     <Compile Include="QueryControl.xaml.cs">
       <DependentUpon>QueryControl.xaml</DependentUpon>
     </Compile>
@@ -207,6 +209,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="1367512141_42264_yellow.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="1367512141_42264_red.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

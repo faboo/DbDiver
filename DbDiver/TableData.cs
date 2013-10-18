@@ -20,7 +20,7 @@ namespace DbDiver
         public string Name { 
             get { return Table.Name; }
         }
-        public IEnumerable<RowData> Data { get; private set; }
+        public IList<RowData> Data { get; private set; }
 
         public void AddData(DataRow row)
         {
@@ -62,12 +62,14 @@ namespace DbDiver
             Set = set;
             Table = set.Table;
 			Key = plain.Key;
-			Name = plain.Name;
+            Dependents = plain.Dependents;
+            Name = plain.Name;
 			Type = plain.Type;
 			ForeignTable = plain.ForeignTable;
 			ForeignColumn = plain.ForeignColumn;
             Data = row[Name];
         }
+
 
         public TableData Set { get; private set; }
         public object Data { get; set; }

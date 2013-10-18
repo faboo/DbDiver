@@ -36,14 +36,14 @@ namespace DbDiver
             Cursor = Cursors.AppStarting;
             
             this.Weave<TableData>(
-                new Func<Connection, ColumnData, TableData>(getDependents),
+                new Func<Connection, ColumnData, TableData>(getRows),
                 data => AddTable(column.Set, data),
                 () => Cursor = Cursors.Arrow,
                 Connection,
                 column);
         }
 
-        private TableData getDependents(Connection connection, ColumnData column)
+        private TableData getRows(Connection connection, ColumnData column)
         {
             Table table = connection.GetTable(column.ForeignTable);
             TableData data = new TableData(table);
@@ -77,6 +77,59 @@ namespace DbDiver
                 OpenData.RemoveAt(parentIdx + 1);
 
             OpenData.Add(child);
+        }
+
+        private void UnshiftTable(TableData parent, TableData child)
+        {
+            int at = OpenData.IndexOf(parent);
+
+            while (at > 0)
+            {
+                OpenData.RemoveAt(0);
+                at -= 1;
+            }
+
+            OpenData.Insert(0, child);
+        }
+
+        private void OnDependentKeySelected(object sender, SelectionChangedEventArgs args)
+        {
+            ColumnData column = (sender as ComboBox).DataContext as ColumnData;
+            Key dependentKey = args.AddedItems[0] as Key;
+
+            this.Weave<TableData>(
+                new Func<Connection,Key,object,TableData>(loadTable),
+                child => UnshiftTable(column.Set, child),
+                () => Cursor = Cursors.Arrow,
+                Connection,
+                dependentKey,
+                column.Data);
+        }
+
+        private TableData loadTable(Connection connection, Key dependentKey, object value)
+        {
+            Table table = connection.GetTable(dependentKey.ForeignTable);
+            TableData data = new TableData(table);
+
+            using (var conn = connection.Get())
+            using (var command = conn.CreateCommand())
+            using (var adapter = connection.CreateDataAdapter())
+            {
+                DataSet results = new DataSet();
+
+                command.CommandText = String.Format(
+                    "select * from {0} where {1} = @key",
+                    table.Name,
+                    dependentKey.ForeignColumn);
+                command.AddWithValue("@key", value);
+                adapter.SelectCommand = command;
+                adapter.Fill(results);
+
+                foreach (DataRow row in results.Tables[0].Rows)
+                    data.AddData(row);
+            }
+
+            return data;
         }
     }
 }

@@ -16,7 +16,7 @@
 	<UserControl.Resources>
         <DataTemplate x:Key="otherTable" DataType="src:Table">
             <DockPanel Margin="7,5,7,5">
-                <TextBlock Text="{Binding Name}" KeyDown="OnEnterKeyDown" DockPanel.Dock="Top" />
+                <TextBlock Text="{Binding Name}" DockPanel.Dock="Top" />
                 <DataGrid ItemsSource="{Binding Columns}"
                           AutoGenerateColumns="false"
                           VerticalContentAlignment="Center"
@@ -24,6 +24,32 @@
                           HorizontalGridLinesBrush="Aquamarine"
                           Margin="0,3,0,0">
                     <DataGrid.Columns>
+										<DataGridTemplateColumn Header="" Width="40" SortMemberPath="Dependents">
+											<DataGridTemplateColumn.CellTemplate>
+												<DataTemplate>
+													<ComboBox ItemsSource="{Binding Dependents}" SelectionChanged="OnDependentKeySelected">
+														<ComboBox.ItemTemplate>
+															<DataTemplate DataType="{x:Type src:Key}">
+																<StackPanel Orientation="Horizontal" Margin="1,5">
+																	<TextBlock Text="{Binding ForeignTable}" />
+																	<TextBlock Text="{Binding Path=ForeignColumn,StringFormat=.{0}}" />
+																</StackPanel>
+															</DataTemplate>
+														</ComboBox.ItemTemplate>
+
+														<ComboBox.Style>
+															<Style TargetType="ComboBox" BasedOn="{StaticResource KeyCombo}">
+																<Style.Triggers>
+																	<DataTrigger Binding="{Binding Dependents}" Value="{x:Null}">
+																		<Setter Property="Visibility" Value="Hidden" />
+																	</DataTrigger>
+																</Style.Triggers>
+															</Style>
+														</ComboBox.Style>
+													</ComboBox>
+												</DataTemplate>
+											</DataGridTemplateColumn.CellTemplate>
+										</DataGridTemplateColumn>
                         <DataGridTemplateColumn Header="Key" Width="40" SortMemberPath="Key">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
@@ -85,7 +111,7 @@
             <DockPanel DockPanel.Dock="Top">
                 <Label Content="Table:" DockPanel.Dock="Left" />
                 <Button Content="Open" DockPanel.Dock="Right" Command="BrowseHome" CommandParameter="{Binding Path=Text,ElementName=firstTable}" />
-                <ComboBox Name="firstTable" ItemsSource="{Binding FirstTables}" IsEditable="true" />
+				<ComboBox Name="firstTable" ItemsSource="{Binding FirstTables}" IsEditable="true" KeyDown="OnEnterKeyDown" />
             </DockPanel>
             
             <Button Content="Create Query" Width="89" HorizontalAlignment="Left" Command="New" />
