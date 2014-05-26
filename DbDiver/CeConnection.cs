@@ -64,5 +64,11 @@ namespace DbDiver
 
             return results;
         }
+
+        protected override Type GetTypeAsNative(string name)
+        {
+            // TODO: Make this more specific.
+            return typeof(string);
+        }
     }
 }

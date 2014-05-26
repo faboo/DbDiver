@@ -74,6 +74,12 @@
     <Compile Include="DataCrawl.xaml.cs">
       <DependentUpon>DataCrawl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="DataCrawlControl.xaml.cs">
+      <DependentUpon>DataCrawlControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="DataDisplaySelector.cs" />
+    <Compile Include="DataEditSelector.cs" />
+    <Compile Include="DataGridColumn.cs" />
     <Compile Include="DbInstance.cs" />
     <Compile Include="DbParametersCollectionExtension.cs" />
     <Compile Include="DbProvider.cs" />
@@ -82,8 +88,11 @@
     </Compile>
     <Compile Include="EditDataEventArgs.cs" />
     <Compile Include="FrameworkElementExtension.cs" />
+    <Compile Include="GridDataControl.cs" />
     <Compile Include="GridExtension.cs" />
+    <Compile Include="CrawlControl.cs" />
     <Compile Include="Int32Extension.cs" />
+    <Compile Include="KeyBoolConverter.cs" />
     <Compile Include="LookupEventArgs.cs" />
     <Compile Include="ManualServer.xaml.cs">
       <DependentUpon>ManualServer.xaml</DependentUpon>
@@ -93,11 +102,11 @@
     <Compile Include="ProceduresControl.xaml.cs">
       <DependentUpon>ProceduresControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="ProxyComboBox.cs" />
     <Compile Include="QueryControl.xaml.cs">
       <DependentUpon>QueryControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="QueryEventArgs.cs" />
+    <Compile Include="Sheva\FindAndReplaceManager.cs" />
     <Compile Include="SqlConnection.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -112,6 +121,10 @@
       <DependentUpon>TablesControl.xaml</DependentUpon>
     </Compile>
     <Page Include="DataCrawl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="DataCrawlControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -7,18 +7,19 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Threading;
 using System.Windows.Threading;
+using System.Windows.Data;
 
 namespace DbDiver
 {
     /// <summary>
     /// Interaction logic for EditData.xaml
     /// </summary>
-    public partial class EditDataControl : UserControl
+    public partial class EditDataControl : GridDataControl
     {
 		public static readonly DependencyProperty TableNameProperty = DependencyProperty.Register("TableName", typeof(string), typeof(EditDataControl));
         public static readonly DependencyProperty TablesProperty = DependencyProperty.Register("Tables", typeof(ObservableCollection<string>), typeof(EditDataControl));
         public static readonly DependencyProperty ConnectionProperty = DependencyProperty.Register("Connection", typeof(Connection), typeof(EditDataControl));
-		public static readonly DependencyProperty RowsProperty = DependencyProperty.Register("Rows", typeof(DataTable), typeof(EditDataControl));
+        public static readonly DependencyProperty RowsProperty = DependencyProperty.Register("Rows", typeof(TableData), typeof(EditDataControl));
 
         public EditDataControl()
         {
@@ -41,18 +42,22 @@ namespace DbDiver
             get { return (Connection)GetValue(ConnectionProperty); }
             set { SetValue(ConnectionProperty, value); }
         }
-		public DataTable Rows
+        public TableData Rows
 		{
-			get { return (DataTable)GetValue(RowsProperty); }
+            get { return (TableData)GetValue(RowsProperty); }
 			set { SetValue(RowsProperty, value); }
 		}
+        protected override DataGrid Data
+        {
+            get { return RowGrid; }
+        }
 
         private Table table;
 
         private void ExecuteCrawl(object sender, ExecutedRoutedEventArgs args)
         {
-            DataRow row = ((DataRowView)RowGrid.SelectedItem).Row;
-            TableData data = new TableData(table);
+            RowData row = ((RowData)RowGrid.CurrentCell.Item);
+            TableData data = new TableData(table, Connection);
             DataCrawl crawl = new DataCrawl();
 
             data.AddData(row);
@@ -64,8 +69,8 @@ namespace DbDiver
         private void ExecuteOpenTable(object sender, ExecutedRoutedEventArgs args)
         {
             Cursor = Cursors.AppStarting;
-            this.Weave<DataTable>(
-                new Func<Connection, string, string, DataTable>(getTable),
+            this.Weave<TableData>(
+                new Func<Connection, string, string, TableData>(getTable),
                 AddRows,
                 () => Cursor = Cursors.Arrow,
 
@@ -79,19 +84,30 @@ namespace DbDiver
             args.CanExecute = !String.IsNullOrWhiteSpace(TablesBox.Text);
         }
 
-        private DataTable getTable(Connection conn, String name, String where)
+        private TableData getTable(Connection conn, String name, String where)
         {
             table = conn.GetTable(name);
 
             return conn.GetTableData(name, null, where);
         }
 
-        private void AddRows(DataTable rows)
+        private void AddRows(TableData rows)
         {
             string tableName = TableName;
             Rows = rows;
-            Rows.RowChanged += OnRowChanged;
-            Rows.RowDeleted += OnRowDeleted;
+
+            RowGrid.Columns.Clear();
+            for(int column = 0; column < rows.Table.Columns.Count; column += 1){
+                RowGrid.Columns.Add(new DataGridColumn
+                    {
+                        Header = rows.Table.Columns[column].Name.Replace('_', ' '),
+                        ColumnName = rows.Table.Columns[column].Name,
+                    });
+            }
+
+            // TODO: Add these or similar
+            //Rows.RowChanged += OnRowChanged;
+            //Rows.RowDeleted += OnRowDeleted;
             Tables.Remove(tableName);
             Tables.Insert(0, tableName);
             TableName = tableName;
@@ -132,25 +148,50 @@ namespace DbDiver
                 DispatcherPriority.Background);
         }
 
-        void OnRowChanged(object sender, DataRowChangeEventArgs args)
+        void OnRowChanged(TableData data, RowChangedEventArgs args)
         {
-            if(args.Row.RowState == DataRowState.Modified)
+            if(!args.Row.New)
                 this.Background(
-                    new Action<Connection, DataRow>((conn, row) =>
+                    new Action<Connection, RowData, Table>((conn, row, table) =>
                         conn.UpdateRow(row, table)),
                     Connection,
-                    args.Row);
+                    args.Row,
+                    data.Table);
             else
                 this.Background(
-                    new Action<Connection, DataRow>((conn, row) =>
+                    new Action<Connection, RowData>((conn, row) =>
                         conn.InsertRow(row, table)),
                     Connection,
                     args.Row);
         }
 
+        private void OnInitializingNewItem(object sender, InitializingNewItemEventArgs args)
+        {
+            //args.NewItem = Rows.NewRow();
+        }
+
         private void OnCellEditEnding(object sender, DataGridCellEditEndingEventArgs args)
         {
             args.Cancel = (args.Column.Header as string).Equals(table.Primary);
+        }
+
+        private void OnRowEditEnding(object sender, DataGridRowEditEndingEventArgs args)
+        {
+            var rowData = args.Row.DataContext as RowData;
+
+            if (!rowData.New)
+                this.Background(
+                    new Action<Connection, RowData, Table>((conn, row, table) =>
+                        conn.UpdateRow(row, table)),
+                    Connection,
+                    rowData,
+                    Rows);
+            else
+                this.Background(
+                    new Action<Connection, RowData>((conn, row) =>
+                        conn.InsertRow(row, table)),
+                    Connection,
+                    rowData);
         }
 
         private void OnEnterKeyDown(object sender, KeyEventArgs args)
@@ -159,6 +200,18 @@ namespace DbDiver
             {
                 ApplicationCommands.Open.Execute(null, this);
             }
+        }
+
+        private void OnRowGridAutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs args)
+        {
+            var column = new DataGridColumn
+                {
+                    Header = args.Column.Header,
+                    ColumnName = args.PropertyName,
+                    CellTemplate = (DataTemplate)Resources["cellDisplay"],
+                };
+
+            args.Column = column;
         }
     }
 }

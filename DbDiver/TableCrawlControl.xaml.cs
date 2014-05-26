@@ -13,7 +13,7 @@ namespace DbDiver {
     /// <summary>
     /// Interaction logic for TableCrawl.xaml
     /// </summary>
-    public partial class TableCrawlControl: UserControl {
+    public partial class TableCrawlControl: CrawlControl {
         public static readonly DependencyProperty ConnectionProperty = DependencyProperty.Register("Connection", typeof(Connection), typeof(TableCrawlControl));
 		public static readonly DependencyProperty FirstTableProperty = DependencyProperty.Register("FirstTable", typeof(string), typeof(TableCrawlControl));
         public static readonly RoutedEvent OnQueryEvent = EventManager.RegisterRoutedEvent("OnQuery", RoutingStrategy.Bubble, typeof(QueryEventHandler), typeof(TableCrawlControl));
@@ -25,8 +25,11 @@ namespace DbDiver {
             get { return (Connection)GetValue(ConnectionProperty); }
 			set { SetValue(ConnectionProperty, value); }
 		}
-        public ObservableCollection<Table> OpenTables { get; set; }
         public ObservableCollection<string> FirstTables { get; set; }
+        protected override ItemsControl TablesList
+        {
+            get { return tablesList; }
+        }
 
         public event QueryEventHandler OnQuery
 		{
@@ -109,69 +112,11 @@ namespace DbDiver {
             args.CanExecute = OpenTables.Count > 0;
         }
 
-        private void ExecuteFind(object sender, ExecutedRoutedEventArgs args)
-        {
-            //OpenTables
-            string search = args.Parameter as string;
-
-            if (search == null)
-            {
-                currentFoundTable = 0;
-                currentFoundColumn = 0;
-            }
-            else
-            {
-                object foundTable = null;
-                object foundColumn = null;
-
-                if (currentFoundTable >= OpenTables.Count)
-                {
-                    currentFoundTable = 0;
-                    currentFoundColumn = 0;
-                }
-
-                while (foundTable == null && currentFoundTable < OpenTables.Count && currentFoundColumn < OpenTables[currentFoundTable].Columns.Count)
-                {
-                    var table = OpenTables[currentFoundTable];
-
-                    while (foundColumn == null && currentFoundColumn < OpenTables[currentFoundTable].Columns.Count)
-                    {
-                        var column = table.Columns[currentFoundColumn];
-
-                        if (column.Name.ToLower().Contains(search))
-                        {
-                            foundTable = table;
-                            foundColumn = column;
-                        }
-
-                        currentFoundColumn += 1;
-                    }
-
-                    if (foundColumn == null)
-                    {
-                        currentFoundTable += 1;
-                        currentFoundColumn = 0;
-                    }
-                }
-
-                if (foundTable != null)
-                {
-                    var grid = TablesList.ItemContainerGenerator.ContainerFromIndex(currentFoundTable)
-                        .FindVisualChild<DataGrid>();
-
-                    grid.BringIntoView();
-                    grid.SelectedIndex = currentFoundColumn - 1;
-                    grid.ScrollIntoView(foundColumn);
-                    grid.Focus();
-                }
-            }
-        }
-
         private void OnEnterKeyDown(object sender, KeyEventArgs args)
         {
             if (args.Key == System.Windows.Input.Key.Enter || args.Key == System.Windows.Input.Key.Return)
             {
-                NavigationCommands.BrowseForward.Execute(null, this);
+                NavigationCommands.BrowseHome.Execute(firstTable.Text, this);
             }
         }
 

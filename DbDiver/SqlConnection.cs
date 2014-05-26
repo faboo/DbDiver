@@ -5,6 +5,7 @@ using System.Data.Common;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace DbDiver
 {
@@ -141,13 +142,49 @@ namespace DbDiver
                             if (!keys.ContainsKey(key.Column))
                                 keys[key.Column] = key;
                             else
-                                keys[key.Column].Type = KeyType.Primary;
+                                keys[key.Column].Type |= KeyType.Primary;
                         }
 
                         reader.Close();
                     }
                 }
             }
+        }
+
+        protected override Type GetTypeAsNative(string name)
+        {
+            Type type = typeof(String);
+
+            name = Regex.Replace(name, @"\(.*\)", "");
+
+            switch(name){
+                case "bigint": type = typeof(long); break;
+                case "int": type = typeof(int); break;
+                case "smallint": type = typeof(short); break;
+                case "tinyint": type = typeof(byte); break;
+                case "numeric":
+                case "decimal": type = typeof(decimal); break;
+                case "float": type = typeof(double); break;
+                case "real": type = typeof(float); break;
+
+                case "date":
+                case "datetime2":
+                case "datetime":
+                case "timeoffset":
+                case "smalldatetime":
+                case "time": type = typeof(DateTime); break;
+
+                case "char":
+                case "varchar":
+                case "text":
+                case "nchar":
+                case "nvarchar":
+                case "ntext": type = typeof(string); break;
+
+                default: type = typeof(object); break;
+            }
+            
+            return type;
         }
     }
 }

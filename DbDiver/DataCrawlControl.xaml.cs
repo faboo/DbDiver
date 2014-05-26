@@ -1,19 +1,27 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
+using System.Linq;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
 
 namespace DbDiver
 {
-    // TODO: Should break this out and create a DataCrawlControl
     /// <summary>
-    /// Interaction logic for DataCrawl.xaml
+    /// Interaction logic for DataCrawlControl.xaml
     /// </summary>
-    public partial class DataCrawl : Window
+    public partial class DataCrawlControl : UserControl
     {
-        public DataCrawl()
+        public DataCrawlControl()
         {
             OpenData = new ObservableCollection<TableData>();
             InitializeComponent();
@@ -69,7 +77,19 @@ namespace DbDiver
             while (OpenData.Count > parentIdx + 1)
                 OpenData.RemoveAt(parentIdx + 1);
 
+            child.RowChanged += OnRowChanged;
             OpenData.Add(child);
+        }
+
+        void OnRowChanged(TableData data, RowChangedEventArgs args)
+        {
+            if (!args.Row.New)
+                this.Background(
+                    new Action<Connection, RowData, Table>((conn, row, table) =>
+                        conn.UpdateRow(row, table)),
+                    Connection,
+                    args.Row,
+                    data.Table);
         }
 
         private void UnshiftTable(TableData parent, TableData child)

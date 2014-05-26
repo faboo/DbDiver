@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="DbDiver.TableCrawlControl"
+﻿<src:CrawlControl x:Class="DbDiver.TableCrawlControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -6,12 +6,12 @@
              xmlns:src="clr-namespace:DbDiver"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300"
-             Name="control">
+             x:Name="control">
   <UserControl.CommandBindings>
     <CommandBinding Command="BrowseHome" Executed="ExecuteOpenTable" CanExecute="CanExecuteOpenTable" />
     <CommandBinding Command="BrowseForward" Executed="ExecuteOpenTable" />
     <CommandBinding Command="New" Executed="ExecuteCreateQuery" CanExecute="CanExecuteNew" />
-		<CommandBinding Command="src:Commands.FindNext" Executed="ExecuteFind" />
+		<!--<CommandBinding Command="src:Commands.FindNext" Executed="ExecuteFind" />-->
 	</UserControl.CommandBindings>
 	<UserControl.Resources>
         <DataTemplate x:Key="otherTable" DataType="src:Table">
@@ -117,7 +117,7 @@
             <Button Content="Create Query" Width="89" HorizontalAlignment="Left" Command="New" />
         </StackPanel>
         
-        <ItemsControl Name="TablesList" ItemsSource="{Binding OpenTables}" ItemTemplate="{StaticResource otherTable}">
+        <ItemsControl Name="tablesList" ItemsSource="{Binding OpenTables}" ItemTemplate="{StaticResource otherTable}">
             <ItemsControl.Template>
                 <ControlTemplate>
                     <Border BorderBrush="LightGray" BorderThickness="1">
@@ -129,4 +129,4 @@
             </ItemsControl.Template>
         </ItemsControl>
     </DockPanel>
-</UserControl>
+</src:CrawlControl>

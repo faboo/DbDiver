@@ -24,15 +24,23 @@
 			<ComboBox SelectedItem="{Binding SelectedServer}"  ItemsSource="{Binding Instances}" DisplayMemberPath="Name" />
 		</DockPanel>
 
-		<DockPanel Margin="0,13,0,0">
-			<Label Content="Username:" DockPanel.Dock="Left"/>
-			<TextBox Text="{Binding Username}" />
-		</DockPanel>
+		<Grid Margin="0,13,0,7">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="Auto" />
+				<ColumnDefinition Width="*" />
+			</Grid.ColumnDefinitions>
+			<Grid.RowDefinitions>
+				<RowDefinition />
+				<RowDefinition Height="3" />
+				<RowDefinition />
+			</Grid.RowDefinitions>
+			
+			<Label Content="Username:" />
+			<TextBox Text="{Binding Username}" Grid.Column="1" />
 
-		<DockPanel Margin="0,0,0,7">
-			<Label Content="Password:" DockPanel.Dock="Left"/>
-			<PasswordBox Name="Password" />
-		</DockPanel>
+			<Label Content="Password:" Grid.Row="2"/>
+			<PasswordBox Name="Password" Grid.Row="2" Grid.Column="1" />
+		</Grid>
 
 		<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
 			<Button Content="Login" IsDefault="true" Command="Open" Width="80" Margin="3" />

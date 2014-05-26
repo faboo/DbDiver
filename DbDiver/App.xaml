@@ -2,7 +2,8 @@
 						 x:Name="App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib"
-             xmlns:mwt="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero">
+             xmlns:mwt="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero"
+						 xmlns:src="clr-namespace:DbDiver">
 <Application.Resources>
 
 	<Style x:Key="KeyCombo"  TargetType="ComboBox">
@@ -145,6 +146,96 @@
 			</Setter.Value>
 		</Setter>
 	</Style>
-	
-</Application.Resources>
+
+		<Style x:Key="plainTextBox" TargetType="TextBox">
+			<Setter Property="HorizontalAlignment" Value="Stretch" />
+			<Setter Property="VerticalAlignment" Value="Stretch" />
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate TargetType="TextBoxBase" >
+						<ScrollViewer Name="PART_ContentHost" SnapsToDevicePixels="{TemplateBinding UIElement.SnapsToDevicePixels}" />
+						<ControlTemplate.Triggers>
+							<Trigger Property="UIElement.IsEnabled" Value="false">
+								<Setter Property="TextElement.Foreground">
+									<Setter.Value>
+										<DynamicResource ResourceKey="{x:Static SystemColors.GrayTextBrushKey}" />
+									</Setter.Value>
+								</Setter>
+							</Trigger>
+						</ControlTemplate.Triggers>
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>
+
+		<DataTemplate x:Key="cellDisplayKey" DataType="src:ColumnData">
+			<Border Name="border">
+				<TextBlock Text="{Binding Data}" TextAlignment="Right" HorizontalAlignment="Stretch" />
+			</Border>
+
+			<DataTemplate.Triggers>
+				<DataTrigger Binding="{Binding Key}" Value="{x:Static src:KeyType.Primary}">
+					<Setter TargetName="border"  Property="Background" Value="Gold" />
+				</DataTrigger>
+				<DataTrigger Binding="{Binding Key}" Value="{x:Static src:KeyType.Foreign}">
+					<Setter TargetName="border"  Property="Background" Value="Gray" />
+				</DataTrigger>
+				<DataTrigger Binding="{Binding Key}" Value="{x:Static src:KeyType.Broken}">
+					<Setter TargetName="border"  Property="Background" Value="#FF69B4" />
+				</DataTrigger>
+			</DataTemplate.Triggers>
+		</DataTemplate>
+
+		<DataTemplate x:Key="cellDisplayString" DataType="src:ColumnData">
+			<TextBlock Text="{Binding Data}" />
+		</DataTemplate>
+
+		<DataTemplate x:Key="cellDisplayNumber" DataType="src:ColumnData">
+			<TextBlock Text="{Binding Data}" TextAlignment="Right" />
+		</DataTemplate>
+
+		<DataTemplate x:Key="cellDisplayBoolean" DataType="src:ColumnData">
+			<CheckBox IsChecked="{Binding Data}" HorizontalAlignment="Center" />
+		</DataTemplate>
+
+
+		<DataTemplate x:Key="cellEditPrimaryKey" DataType="src:ColumnData">
+			<Border Name="border" Background="Gold">
+				<TextBlock Text="{Binding Data}" TextAlignment="Right" HorizontalAlignment="Stretch" />
+			</Border>
+		</DataTemplate>
+
+		<DataTemplate x:Key="cellEditForeignKey" DataType="src:ColumnData">
+			<Border Name="border">
+				<TextBlock Text="{Binding Data}" TextAlignment="Right" HorizontalAlignment="Stretch" />
+			</Border>
+
+			<DataTemplate.Triggers>
+				<DataTrigger Binding="{Binding Key,Converter={x:Static src:KeyBoolConverter.Instance},ConverterParameter={x:Static src:KeyType.Foreign}}" Value="true">
+					<Setter TargetName="border"  Property="Background" Value="Gray" />
+				</DataTrigger>
+				<!-- Could be foreign and primary -->
+				<DataTrigger Binding="{Binding Key,Converter={x:Static src:KeyBoolConverter.Instance},ConverterParameter={x:Static src:KeyType.Primary}}" Value="true">
+					<Setter TargetName="border"  Property="Background" Value="Gold" />
+				</DataTrigger>
+				<DataTrigger Binding="{Binding Key,Converter={x:Static src:KeyBoolConverter.Instance},ConverterParameter={x:Static src:KeyType.Broken}}" Value="true">
+					<Setter TargetName="border"  Property="BorderBrush" Value="#FF69B4" />
+					<Setter TargetName="border" Property="BorderThickness" Value="1" />
+				</DataTrigger>
+			</DataTemplate.Triggers>
+		</DataTemplate>
+
+		<DataTemplate x:Key="cellEditString" DataType="src:ColumnData">
+			<TextBox Text="{Binding Data, Mode=TwoWay}" Style="{StaticResource plainTextBox}" />
+		</DataTemplate>
+
+		<DataTemplate x:Key="cellEditNumber" DataType="src:ColumnData">
+			<TextBox Text="{Binding Data, Mode=TwoWay}" TextAlignment="Right" Style="{StaticResource plainTextBox}" />
+		</DataTemplate>
+
+		<DataTemplate x:Key="cellEditBoolean" DataType="src:ColumnData">
+			<CheckBox IsChecked="{Binding Data, Mode=TwoWay}" HorizontalAlignment="Center" />
+		</DataTemplate>
+
+	</Application.Resources>
 </Application>

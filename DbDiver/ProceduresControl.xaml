@@ -1,18 +1,17 @@
-﻿<UserControl x:Class="DbDiver.ProceduresControl"
+﻿<src:GridDataControl x:Class="DbDiver.ProceduresControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 						 xmlns:src="clr-namespace:DbDiver"
-             Name="control"
+             x:Name="control"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
   <UserControl.CommandBindings>
-		<CommandBinding Command="src:Commands.FindNext" Executed="ExecuteFind" />
 		<CommandBinding Command="GoToPage" Executed="ExecuteQueryModule" />
 		<CommandBinding Command="src:Commands.Describe" Executed="ExecuteDescribe" CanExecute="CanExecuteDescribe" />
 	</UserControl.CommandBindings>
-	<DataGrid Name="Data"
+	<DataGrid Name="RowGrid"
             ItemsSource="{Binding Path=Procedures,ElementName=control}"
             IsReadOnly="true"
             VerticalGridLinesBrush="LightGray"
@@ -34,4 +33,4 @@
       </Style>
     </DataGrid.RowStyle>
   </DataGrid>
-</UserControl>
+</src:GridDataControl>

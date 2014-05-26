@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="DbDiver.EditDataControl"
+﻿<src:GridDataControl x:Class="DbDiver.EditDataControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -6,11 +6,59 @@
 						 xmlns:src="clr-namespace:DbDiver"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300"
-						 Name="Control">
+						 x:Name="Control">
 	<UserControl.CommandBindings>
 		<CommandBinding Command="Open" Executed="ExecuteOpenTable" CanExecute="CanOpenTable" />
 		<CommandBinding Command="src:Commands.Describe" Executed="ExecuteCrawl" />
 	</UserControl.CommandBindings>
+	<UserControl.Resources>
+		<!--<Style x:Key="cellDisplay" TargetType="DataGridCell">
+			<Setter Property="ContentTemplate">
+				<Setter.Value>
+					<DataTemplate DataType="src:ColumnData">
+						<Border Name="border">
+							<StackPanel Orientation="Horizontal">
+							<TextBlock Text=">" /> <ContentPresenter Content="{Binding Data}" />
+							</StackPanel>
+						</Border>
+
+						<DataTemplate.Triggers>
+							<DataTrigger Binding="{Binding Key}" Value="{x:Static src:KeyType.Primary}">
+								<Setter TargetName="border"  Property="Background" Value="Gold" />
+							</DataTrigger>
+							<DataTrigger Binding="{Binding Key}" Value="{x:Static src:KeyType.Foreign}">
+								<Setter TargetName="border"  Property="Background" Value="Gray" />
+							</DataTrigger>
+							<DataTrigger Binding="{Binding Key}" Value="{x:Static src:KeyType.Broken}">
+								<Setter TargetName="border"  Property="Background" Value="#FF69B4" />
+							</DataTrigger>
+						</DataTemplate.Triggers>
+					</DataTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>-->
+		<!--
+		<DataTemplate x:Key="cellDisplay" DataType="src:ColumnData">
+			<Border Name="border">
+				<StackPanel Orientation="Horizontal">
+					<ContentPresenter Content="{Binding Data}" />
+				</StackPanel>
+			</Border>
+
+			<DataTemplate.Triggers>
+				<DataTrigger Binding="{Binding Key}" Value="{x:Static src:KeyType.Primary}">
+					<Setter TargetName="border"  Property="Background" Value="Gold" />
+				</DataTrigger>
+				<DataTrigger Binding="{Binding Key}" Value="{x:Static src:KeyType.Foreign}">
+					<Setter TargetName="border"  Property="Background" Value="Gray" />
+				</DataTrigger>
+				<DataTrigger Binding="{Binding Key}" Value="{x:Static src:KeyType.Broken}">
+					<Setter TargetName="border"  Property="Background" Value="#FF69B4" />
+				</DataTrigger>
+			</DataTemplate.Triggers>
+		</DataTemplate>
+		-->
+	</UserControl.Resources>
 
 	<DockPanel DataContext="{Binding ElementName=Control}">
 		<DockPanel DockPanel.Dock="Top">
@@ -22,12 +70,48 @@
 		</DockPanel>
 		<Button Content="Run" Command="Open" Grid.Row="2" Grid.Column="1" Margin="0 5 0 5" Width="72" DockPanel.Dock="Top" HorizontalAlignment="Left" />
 
-		<DataGrid ItemsSource="{Binding Rows}"	
+		<DataGrid ItemsSource="{Binding Rows.Data}"	
 							Name="RowGrid"
 							IsReadOnly="False"
+							SelectionUnit="Cell"
 							VerticalGridLinesBrush="LightGray"
 							HorizontalGridLinesBrush="Aquamarine"
-							CellEditEnding="OnCellEditEnding">
+							AutoGenerateColumns="false"
+							CellEditEnding="OnCellEditEnding"
+							RowEditEnding="OnRowEditEnding">
+			<!--AutoGenerateColumns="true"
+							AutoGeneratingColumn="OnRowGridAutoGeneratingColumn"-->
+			<!--			<DataGrid.CellStyle>
+				<Style TargetType="DataGridCell">
+					<Setter Property="Template">
+						<Setter.Value>
+							<ControlTemplate TargetType="DataGridCell">
+								<ContentPresenter Content="{TemplateBinding Content}">
+									<ContentPresenter.ContentTemplate>
+										<DataTemplate>
+											<Border Name="border">
+												<ContentPresenter Content="{Binding Data}" />
+											</Border>
+
+											<DataTemplate.Triggers>
+												<DataTrigger Binding="{Binding DataContext.Key}" Value="{x:Static src:KeyType.Primary}">
+													<Setter TargetName="border"  Property="Background" Value="Gold" />
+												</DataTrigger>
+												<DataTrigger Binding="{Binding DataContext.Key}" Value="{x:Static src:KeyType.Foreign}">
+													<Setter TargetName="border"  Property="Background" Value="Gray" />
+												</DataTrigger>
+												<DataTrigger Binding="{Binding DataContext.Key}" Value="{x:Static src:KeyType.Broken}">
+													<Setter TargetName="border"  Property="Background" Value="#FF69B4" />
+												</DataTrigger>
+											</DataTemplate.Triggers>
+										</DataTemplate>
+									</ContentPresenter.ContentTemplate>
+								</ContentPresenter>
+							</ControlTemplate>
+						</Setter.Value>
+					</Setter>
+				</Style>
+			</DataGrid.CellStyle>-->
 			<DataGrid.RowStyle>
 				<Style TargetType="DataGridRow">
 					<Setter Property="ContextMenu">
@@ -43,4 +127,4 @@
 			</DataGrid.RowStyle>
 		</DataGrid>
 	</DockPanel>
-</UserControl>
+</src:GridDataControl>

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Data;
 using System.Data.Common;
-using System.Data.SqlClient;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
@@ -15,7 +14,7 @@ namespace DbDiver
     /// <summary>
     /// Interaction logic for ProceduresControl.xaml
     /// </summary>
-    public partial class ProceduresControl : UserControl
+    public partial class ProceduresControl : GridDataControl
     {
         public static readonly DependencyProperty ConnectionProperty = DependencyProperty.Register("Connection", typeof(Connection), typeof(ProceduresControl));
         public static readonly DependencyProperty ProceduresProperty = DependencyProperty.Register("Procedures", typeof(DataTable), typeof(ProceduresControl));
@@ -23,7 +22,6 @@ namespace DbDiver
         public static readonly RoutedEvent OnQueryEvent = EventManager.RegisterRoutedEvent("OnQuery", RoutingStrategy.Bubble, typeof(QueryEventHandler), typeof(ProceduresControl));
 
         bool proceduresLoaded = false;
-        private int currentFound = 0;
 
         public Connection Connection
 		{
@@ -35,6 +33,10 @@ namespace DbDiver
             get { return (DataTable)GetValue(ProceduresProperty); }
             set { SetValue(ProceduresProperty, value); }
 		}
+        protected override DataGrid Data
+        {
+            get { return RowGrid; }
+        }
 
         public event LookupEventHandler OnLookup
 		{
@@ -118,42 +120,6 @@ namespace DbDiver
         private void Describe(DataRow row)
         {
             RaiseEvent(new LookupEventArgs { Procedure = row[0] as string, RoutedEvent = OnLookupEvent });
-        }
-
-        private void ExecuteFind(object sender, ExecutedRoutedEventArgs args)
-        {
-            string search = args.Parameter as string;
-
-            if (search == null)
-            {
-                currentFound = 0;
-            }
-            else{
-                object found = null;
-
-                if (currentFound >= Procedures.Rows.Count)
-                    currentFound = 0;
-
-                while (found == null && currentFound < Procedures.Rows.Count)
-                {
-                    var row = Data.Items.GetItemAt(currentFound) as DataRowView;
-
-                    foreach(var item in row.Row.ItemArray)
-                        if (item.ToString().ToLower().Contains(search))
-                        {
-                            found = row;
-                            break;
-                        }
-
-                    currentFound += 1;
-                }
-
-                if (found != null)
-                {
-                    Data.ScrollIntoView(found);
-                    Data.SelectedItem = found;
-                }
-            }
         }
 
         private void ExecuteQueryModule(object sender, ExecutedRoutedEventArgs args)

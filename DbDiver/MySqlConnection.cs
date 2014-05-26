@@ -131,7 +131,7 @@ namespace DbDiver
                         if (!keys.ContainsKey(key.Column))
                             keys[key.Column] = key;
                         else
-                            keys[key.Column].Type = KeyType.Primary;
+                            keys[key.Column].Type |= KeyType.Primary;
                     }
                 }
             }
@@ -179,6 +179,12 @@ namespace DbDiver
             }
 
             return keys;
+        }
+
+        protected override Type GetTypeAsNative(string name)
+        {
+            // TODO: Make this more specific.
+            return typeof(string);
         }
     }
 }

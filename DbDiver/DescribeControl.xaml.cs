@@ -9,6 +9,7 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Threading;
+using Sheva.Windows.Documents;
 
 namespace DbDiver {
     /// <summary>
@@ -22,6 +23,7 @@ namespace DbDiver {
 
         private string plainDescription;
         private int currentFound = 0;
+        private FindManager find;
 
         public DescribeControl() {
             ObjNames = new ObservableCollection<string>();
@@ -120,24 +122,39 @@ namespace DbDiver {
         private void Describe(string plainDescription, string description) {
             this.plainDescription = plainDescription;
             Description.Document = (FlowDocument)XamlReader.Parse(description);
+            find = new FindManager(Description.Document);
             Cursor = Cursors.Arrow;
         }
 
         private void ExecuteFind(object sender, ExecutedRoutedEventArgs args)
         {
-            if (currentFound > plainDescription.Length || currentFound < 0)
-                currentFound = 0;
+            string search = args.Parameter as string;
 
-            /*currentFound = plainDescription.IndexOf(
-                SearchOperations.GetSearchTerm(this),
-                currentFound,
-                StringComparison.InvariantCultureIgnoreCase);*/
-
-            if (currentFound >= 0)
+            if (search != null)
             {
-                var position = Description.CaretPosition.DocumentStart.GetPositionAtOffset(currentFound, LogicalDirection.Forward);
-                Description.CaretPosition = position;
-                Description.ScrollToVerticalOffset(Description.CaretPosition.GetCharacterRect(LogicalDirection.Forward).Top);
+                TextRange range;
+
+                find.CurrentPosition = Description.CaretPosition;
+                range = find.FindNext(search);
+
+                if (range == null)
+                {
+                    find.CurrentPosition = Description.CaretPosition.DocumentStart;
+                    range = find.FindNext(search);
+                }
+
+                if (range != null)
+                {
+                    Description.CaretPosition = range.Start;
+                    Description.Selection.Select(range.Start, range.End);
+                }
+
+                Description.Focus();
+            }
+            else
+            {
+                //Description.CaretPosition = Description.CaretPosition.DocumentStart;
+                find.CurrentPosition = Description.CaretPosition;
             }
         }
 

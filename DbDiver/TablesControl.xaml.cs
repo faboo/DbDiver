@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Data;
-using System.Data.Common;
-using System.Data.SqlClient;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
@@ -13,7 +11,7 @@ namespace DbDiver
     /// <summary>
     /// Interaction logic for TablesControl.xaml
     /// </summary>
-    public partial class TablesControl : UserControl
+    public partial class TablesControl : GridDataControl
     {
 		public static readonly DependencyProperty ConnectionProperty = DependencyProperty.Register("Connection", typeof(Connection), typeof(TablesControl));
 		public static readonly DependencyProperty TablesProperty = DependencyProperty.Register("Tables", typeof(DataTable), typeof(TablesControl));
@@ -23,7 +21,6 @@ namespace DbDiver
         public static readonly RoutedEvent OnEditDataEvent = EventManager.RegisterRoutedEvent("OnEditData", RoutingStrategy.Bubble, typeof(EditDataEventHandler), typeof(TablesControl));
 
         bool tablesLoaded = false;
-        private int currentFound = 0;
 
         public Connection Connection
 		{
@@ -40,6 +37,10 @@ namespace DbDiver
 			get { return (string)GetValue(SearchProperty); }
 			set { SetValue(SearchProperty, value); }
 		}
+        protected override DataGrid Data
+        {
+            get { return RowGrid; }
+        }
 
         public event CrawlEventHandler OnCrawl
 		{
@@ -126,43 +127,6 @@ namespace DbDiver
         private void Crawl(DataRow row)
         {
             RaiseEvent(new CrawlEventArgs { Table = row[0] as string, RoutedEvent = OnCrawlEvent });
-        }
-
-        private void ExecuteFind(object sender, ExecutedRoutedEventArgs args)
-        {
-            string search = args.Parameter as string;
-
-            if(search == null)
-            {
-                currentFound = 0;
-            }
-            else
-            {
-                object found = null;
-
-                if (currentFound >= Tables.Rows.Count)
-                    currentFound = 0;
-
-                while (found == null && currentFound < Tables.Rows.Count)
-                {
-                    var row = Data.Items.GetItemAt(currentFound) as DataRowView;
-
-                    foreach (var item in row.Row.ItemArray)
-                        if (item.ToString().ToLower().Contains(search))
-                        {
-                            found = row;
-                            break;
-                        }
-
-                    currentFound += 1;
-                }
-
-                if (found != null)
-                {
-                    Data.ScrollIntoView(found);
-                    Data.SelectedItem = found;
-                }
-            }
         }
 
         private void ExecuteQueryTable(object sender, ExecutedRoutedEventArgs args)
