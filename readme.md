@@ -29,13 +29,9 @@ discovery and integrated authentication), Sql Server Compact Edition, and MySQL.
 TODO
 ----
 
-* Find in the Lookup tab is broken; a proper implementation is unfortunately a
-  bit complicated.
 * Need a method for editing table data in place (mostly done).
 	* It would be nice if adding a row with FKs provided a way to search for
 	  appropriate foreign rows.
-* Need a method for crawling the relationships between concrete rows of data.
-	* Started!
 * Oracle, MySQL, and PostgreSQL support.
 	* MySQL is now supported.
 
@@ -43,5 +39,5 @@ TODO
 Copying
 -------
 
-DbDiver is copyright Ray Wallace, 2013. You may copy this software under the
+DbDiver is copyright Ray Wallace, 2014. You may copy this software under the
 terms of the GNU Public License, version 2.  See COPYING for details.
